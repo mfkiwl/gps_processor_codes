@@ -79,6 +79,7 @@ def group_results(results_dict, l):
                 continue
             group.append(v)
             i += 1
+        groupped.append(list(chain(*group)))
     return groupped
 
 
@@ -152,7 +153,8 @@ def calc_for_one_sattelite_beta(posA, posB, sat_pr_both):
     n = A_SA_i - B_SB_j
 
     mod_n = dr_lenght(array([0, 0, 0]), n)
-    return unit(n), get_proportion_v0(AS, t1, BS, t2) / float(mod_n), mod_n
+    # return unit(n), get_proportion_v0(AS, t1, BS, t2) / float(mod_n), mod_n
+    return unit(n), get_proportion_v3(AS, t1, BS, t2), mod_n
 
 
 def get_proportion_v0(AS, t1, BS, t2):
@@ -171,7 +173,7 @@ def get_proportion_v2(AS, t1, BS, t2):
 
 def get_proportion_v3(AS, t1, BS, t2):
     r = float(AS) * float(t2) / float(BS) / float(t1)
-    return abs(r - 1.0 / float(r))
+    return r - 1.0 / float(r)
 
 
 # ===============================================================================================================================================================================
@@ -198,14 +200,15 @@ def raw_results_to_GCS(results_ECEF, GCS):
     results_GCS = []
     nr_groups = len(results_ECEF)
     nr_axis = len(GCS)
-    if nr_axis == nr_groups:
-        for i in range(nr_groups):
-            results_group = results_ECEF[i]
-            GCS_group = GCS[i]
-            results_group_GCS = []
-            for direction, value, mod_n in results_group:
-                results_group_GCS.append([ecef_to_gcs(GCS_group, direction), value, mod_n])
-            results_GCS.append(results_group_GCS)
+    print("Systems and groups: ", nr_axis, nr_groups)
+    # if nr_axis == nr_groups:
+    for i in range(nr_groups):
+        results_group = results_ECEF[i]
+        GCS_group = GCS[i]
+        results_group_GCS = []
+        for direction, value, mod_n in results_group:
+            results_group_GCS.append([ecef_to_gcs(GCS_group, direction), value, mod_n])
+        results_GCS.append(results_group_GCS)
     return results_GCS
 
 
@@ -250,22 +253,23 @@ def cartesian_to_galactic(system, vector):
 
 
 def cart2sph(x, y, z):
-    hxy = np.hypot(x, y)
-    r = np.hypot(hxy, z)
-    el = np.arctan2(z, hxy)
-    az = np.arctan2(y, x)
+    hxy = hypot(x, y)
+    r = hypot(hxy, z)
+    el = arctan2(z, hxy)
+    az = arctan2(y, x)
     return az, el
 
 
-# def cartesian_to_spherical(vector):
-#     theta, phi = get_theta_phi(vector)
-#     ECEF = array(([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
-#     if not theta and not phi:
-#         phi, theta, _ = pm.ecef2geodetic(vector[0], vector[1], vector[2])
-#         phi = 90 - degrees(arccos(scal(ECEF[2], vector)))
-#     return radians(theta), radians(phi)
+def cartesian_to_spherical(vector):
+    theta, phi = get_theta_phi(vector)
+    ECEF = array(([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
+    if not theta and not phi:
+        phi, theta, _ = pm.ecef2geodetic(vector[0], vector[1], vector[2])
+        phi = 90 - degrees(arccos(scal(ECEF[2], vector)))
+    return radians(theta), radians(phi)
 # =================================================================================================
 # =================================================================================================
+
 
 def get_global_stars(star_dir, directory):
     star_dirs = [f.path for f in os.scandir(star_dir) if f.is_dir()]
@@ -321,6 +325,7 @@ def process_raw_GCS_data(raw_results_GCS, resolution):
     # return divide(divide(cmap_v, cmap_count), divide(cmap_mod_n, cmap_count)),
     # cmap_count, divide(cmap_mod_n, cmap_count)
     cmap_count[cmap_count < 1] = 0
+
     return cmap_v, cmap_count, cmap_mod_n
 
 
@@ -425,7 +430,7 @@ def add_star_annotated(theta, phi, name, ax):
 #                verticalalignment='top')
 
 
-def plot_save_imshow_3_maps(matrices, names, root_directory, resolution="5", logplot=False, show=False):
+def plot_save_imshow_3_maps(matrices, names, root_directory, resolution="5", logplot=False, show=False, fill_out=0.0):
     matrices = array(matrices)
     # plt.clf()
     if logplot:
@@ -439,7 +444,7 @@ def plot_save_imshow_3_maps(matrices, names, root_directory, resolution="5", log
     fig.subplots_adjust(left=0.02, bottom=0.1, right=0.95, top=0.94, wspace=0.8, hspace=0.5)
 
     for matrix, name, ax in zip(matrices, names, axis):
-        nan_to_num(matrix, nan=1.0)
+        nan_to_num(matrix, nan=fill_out)
         sp = ax.imshow(matrix)
         ax.set_title(name)
         fig.colorbar(sp, ax=ax)
@@ -492,7 +497,7 @@ def process_one_day(pathA, pathB, star_dir, resolution, root=None,
     if root is None:
         root = os.path.dirname(os.path.dirname(pathA))
     save_matrices([day_data, day_count, day_cmap_n_mod], ["measure", "histogram", "n_mod"], root, resolution)
-
+    # print(day_data)
     plot_mollweid(day_count, star_directions_in_GCS, root, "histogram", str(int(degrees(resolution))), anot=True)
     plot_mollweid(divide(day_data, day_count), star_directions_in_GCS, root, "measure", str(int(degrees(resolution))),
                   anot=True)
@@ -645,16 +650,22 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
 star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
 resolution = radians(5.0)
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
-
+# --------------------------------------------NZLD-PERTH--------------------------------------------
 place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
 place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/r_only"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/felezo_irany"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/r_inv_r"
+
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AminusB"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AplusB"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_NplusDxyz"
+
+# --------------------------------------------KOREA-Hong-Kong--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/R_Rinv"
+
+
 
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
@@ -959,10 +970,8 @@ def plot_the_three_raw_matrix_from_path(path):
 # plot_mollweid_simple(M)
 
 
-# plot_the_three_raw_matrix_from_path(results_root)
+plot_the_three_raw_matrix_from_path(results_root)
 
 
 # nanolaseri si plasmonics
 
-
-# talakozas email(kb 20) burokratikus
