@@ -923,10 +923,10 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_meth
 
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
                "november", "majus", "aprilis" , "junius", "december2020"]
-months = None  # ["julius", "szeptember", "februar", "marcius", "augusztus", "januar"]
+months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar"]
 
 
-m, h, n = create_averaged_plots_from_root(results_root, months)
+m, h, n = create_averaged_plots_from_root(results_root, month_names)
 handle_raw_not_averaged_matrices(m, h, n)
 
 
