@@ -692,27 +692,16 @@ def get_csv_file(directory):
     return files_with_path
 
 
-def select_cmap_hist(file_list):
-    hist = None
-    cmap = None
-    for file in file_list:
-        if "histogram" in str(os.path.split(file)[-1]):
-            hist = file
-        if "cmap" in str(os.path.split(file)[-1]):
-            cmap = file
-    return cmap, hist
-
-
 def select_cmap_hist_n_mod(file_list):
     hist = None
     cmap = None
     n_mod = None
     for file in file_list:
-        if "histogram" in str(os.path.split(file)[-1]):
+        if "histogram_not_averaged" in str(os.path.split(file)[-1]):
             hist = file
-        if "cmap" in str(os.path.split(file)[-1]) or "measure" in str(os.path.split(file)[-1]):
+        if "measure_not_averaged" in str(os.path.split(file)[-1]) or "measure" in str(os.path.split(file)[-1]):
             cmap = file
-        if "n_mod" in str(os.path.split(file)[-1]):
+        if "n_mod_not_averaged" in str(os.path.split(file)[-1]):
             n_mod = file
     # print(hist)
     # print(n_mod)
@@ -793,16 +782,11 @@ f_d = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/test/2
 
 # read_matrix(f_d, f_h)
 
-def modify_matrix_by_cond(data, histogram):
-    H = rotateAntiClockwise(pd.read_csv(histogram).values[:, 1:])
-    M = rotateAntiClockwise(pd.read_csv(data).values[:, 1:])
-    # ind_no_data = where(H == 0.0)[0] # argwhere(H == 0.0)
-
-    # M[M >0.1] = 0
-    # M = log(M+1.0)
-    # M = around(M, decimals=0)
-
-    return M, H
+def get_matrices_from_paths(paths):
+    matrices = []
+    for matrix_path in paths:
+        matrices.append(rotateAntiClockwise(pd.read_csv(matrix_path).values[:, 1:]))
+    return matrices
 
 
 def plot_save_imshow_2_maps(matrix1, matrix2, root_directory, name, resolution="5", logplot=True):
@@ -825,76 +809,6 @@ def plot_save_imshow_2_maps(matrix1, matrix2, root_directory, name, resolution="
     fig_name = os.path.join(root_directory, child_dirname + '.png')
     fig.savefig(fig_name, bbox_inches='tight')
     plt.clf()
-
-
-# =============================================================================================================================
-# =============================================================================================================================
-# =============================================================================================================================
-
-def create_averaged_plots_from_root(root_0):
-    mean_all_cmap = []
-    mean_all_hist = []
-    mean_all_n_mod = []
-    subfolders_with_paths_months = [f.path for f in os.scandir(root_0) if f.is_dir()]
-    for month_root in subfolders_with_paths_months[:1]:
-        days_with_paths = [f.path for f in os.scandir(month_root) if f.is_dir()]
-        mean_month_cmap = []
-        mean_month_hist = []
-        mean_month_n_mod = []
-
-        for day_root in days_with_paths:
-            csv_files = get_csv_file(day_root)
-            # cmap, hist = select_cmap_hist(csv_files)
-            cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
-            if (cmap and hist) and (os.path.isfile(cmap) and os.path.isfile(hist)):
-                M, H = modify_matrix_by_cond(cmap, hist)
-                mean_month_cmap.append(M)
-                mean_month_hist.append(H)
-                mean_month_n_mod.append(
-                    rotateAntiClockwise(nan_to_num(pd.read_csv(n_mod, na_filter=True).values[:, 1:], nan=0.0)))
-        mean_month_cmap = mean(array(mean_month_cmap), axis=0)
-        mean_month_hist = mean(array(mean_month_hist), axis=0)
-        mean_month_n_mod = mean(array(mean_month_n_mod), axis=0)
-        # plot_save_imshow_2_maps(mean_month_hist, mean_month_cmap, month_root, os.path.split(month_root)[-1], resolution="5")
-        plot_save_imshow_3_maps([mean_month_hist, mean_month_cmap, mean_month_n_mod],
-                                ["|1-r|/|n|", "Histogram", "<n_mod>"], month_root, resolution="5")
-        # print(shape(mean_month_cmap))
-        plot_save_imshow(mean_month_cmap, month_root, "mean_cmap")
-
-        # plot_save_imshow(mean_month_hist, month_root, "mean_hist", logplot=True)
-
-        mean_all_cmap.append(mean_month_cmap)
-        mean_all_hist.append(mean_month_hist)
-        mean_all_n_mod.append(mean_month_n_mod)
-
-    # except:
-    # 	pass
-    mean_all_cmap = mean(array(mean_all_cmap), axis=0)
-    mean_all_hist = mean(array(mean_all_hist), axis=0)
-    mean_all_n_mod = mean(array(mean_all_n_mod), axis=0)
-    # print(mean_all_cmap)
-    # plot_save_imshow_2_maps(mean_all_hist, mean_all_cmap, root_0, os.path.split(root_0)[-1], resolution="5")
-    plot_save_imshow_3_maps([mean_all_hist, mean_all_cmap, mean_all_n_mod], ["|1-r|/|n|", "Histogram", "<n_mod>"],
-                            root_0, resolution="5")
-    plot_save_imshow(mean_all_cmap, root_0, "mean_cmap")
-
-
-# plot_save_imshow(mean_all_hist, root_0, "mean_hist", logplot=True)
-
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AminusB"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AplusB"
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_NplusD"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_NplusDxyz"
-
-# create_averaged_plots_from_root(results_root)
-
-
-def clean_from_nans_(matrix):
-    for i in matrix:
-        nan_to_num(i, nan=0.0)
-        i[i > 0.03] = 0
 
 
 def clean_from_nans(matrix):
@@ -931,11 +845,95 @@ def calc_correct_average(H, M, new_shape):
     # plt.show()
     return reshaped
 
+# =============================================================================================================================
+# =============================================================================================================================
+# =============================================================================================================================
+
+
+def create_averaged_plots_from_root(root_0, months=None):
+    sum_all_cmap = []
+    sum_all_hist = []
+    sum_all_n_mod = []
+    subfolders_with_paths_months = [f.path for f in os.scandir(root_0) if f.is_dir()]
+    for month_root in subfolders_with_paths_months:
+        month_name = str(month_root).split("/")[-1]
+        if months and month_name in months:
+
+            days_with_paths = [f.path for f in os.scandir(month_root) if f.is_dir()]
+            print("Month name: ", month_name, "  nr days: ", len(days_with_paths))
+            for day_root in days_with_paths:
+                csv_files = get_csv_file(day_root)
+                cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
+                if (cmap and hist and n_mod) and (os.path.isfile(cmap) and os.path.isfile(hist) and os.path.isfile(n_mod)):
+                    M, H, N = get_matrices_from_paths([cmap, hist, n_mod])
+                    sum_all_cmap.append(M)
+                    sum_all_hist.append(H)
+                    sum_all_n_mod.append(N)
+    print("Total number of days:  ", len(sum_all_cmap))
+    sum_all_cmap = sum(array(sum_all_cmap), axis=0)
+    sum_all_hist = sum(array(sum_all_hist), axis=0)
+    sum_all_n_mod = sum(array(sum_all_n_mod), axis=0)
+    # plot_save_imshow_3_maps([sum_all_cmap, sum_all_hist, sum_all_n_mod], ["|1-1/r|", "Histogram", "<n_mod>"],
+    #                         root_0, resolution="5")
+    # plot_save_imshow(sum_all_cmap, root_0, "|1-1/r|")
+    return sum_all_cmap, sum_all_hist, sum_all_n_mod
+
+
+def handle_raw_not_averaged_matrices(M, H, N):
+    ind_no_data = array(H < 1)
+
+    M[ind_no_data] = nan
+    N[ind_no_data] = 0.0
+
+    H[H < 1] = 0
+
+    # N[N<0]=0
+
+    # nan_to_num(H, nan=0.0)
+    # nan_to_num(M, nan=0.0)
+    # nan_to_num(N, nan=0.0)
+
+    M = divide(M, H)
+    # N = divide(N, H)
+    # N = nan_to_num(N, nan=0.0)
+    # M = nan_to_num(M, nan=0)
+    # M = absolute(M)
+    # M[absolute(M)>0.008] = nan
+
+    # M = clean_from_nans(M)
+    # M[M>0.005]=0
+    a = 3
+    b = a  # * 2
+    # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
+    M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
+
+    M[M == 0] = nan
+    M[M < 0] = 1
+    # M[M>0]=2
+    # H = log(H)
+    # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
+
+    plt.imshow(M)
+    plt.colorbar()
+    # plt.title("<|1-r|/|n|>")
+    plt.show()
+
+
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r"
+
+month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
+               "november", "majus", "aprilis" , "junius", "december2020"]
+months = None  # ["julius", "szeptember", "februar", "marcius", "augusztus", "januar"]
+
+
+m, h, n = create_averaged_plots_from_root(results_root, months)
+handle_raw_not_averaged_matrices(m, h, n)
+
 
 def plot_the_three_raw_matrix_from_path(path):
     csv_files = get_csv_file(path)
     cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
-    M, H = modify_matrix_by_cond(cmap, hist)
+    M, H = get_matrices_from_paths(cmap, hist)
     N = rotateAntiClockwise(nan_to_num(pd.read_csv(n_mod, na_filter=True).values[:, 1:], nan=0.0))
     ind_no_data = array(H < 1)
 
@@ -965,7 +963,7 @@ def plot_the_three_raw_matrix_from_path(path):
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
     M[M == 0] = nan
-    M[M > 0] = nan
+    M[M > 0] = 1
     # M[M>0]=2
     # H = log(H)
     # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
@@ -980,7 +978,7 @@ def plot_the_three_raw_matrix_from_path(path):
 # plot_mollweid_simple(M)
 
 
-plot_the_three_raw_matrix_from_path(results_root)
+# plot_the_three_raw_matrix_from_path(results_root)
 
 # =================================================================================================================================================================
 # =================================================================================================================================================================
