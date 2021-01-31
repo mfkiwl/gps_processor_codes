@@ -38,7 +38,6 @@ def getSTARS_for_galactic_system(path):
 
 
 def get_mean_direction_over_time(systems, directions):
-    # systems = systems.T
     l = min(len(directions), len(systems[0]))
     phi = 0.
     theta = 0.
@@ -88,7 +87,6 @@ def parse_sats_data(sat_data_file):
     epoch = []
     with open(sat_data_file) as in_file:
         lineList = [line.rstrip('\n').split(",") for line in in_file]
-        # n=10000
         for line in lineList[1:]:
             if line[0][0] == "E":
                 data[line[-1]] = epoch
@@ -153,7 +151,6 @@ def calc_for_one_sattelite_beta(posA, posB, sat_pr_both):
     n = A_SA_i - B_SB_j
 
     mod_n = dr_lenght(array([0, 0, 0]), n)
-    # return unit(n), get_proportion_v0(AS, t1, BS, t2) / float(mod_n), mod_n
     return unit(n), get_proportion_v3(AS, t1, BS, t2), mod_n
 
 
@@ -322,10 +319,7 @@ def process_raw_GCS_data(raw_results_GCS, resolution):
         cmap_v[i][j] += value
         cmap_mod_n[i][j] += mod_n
         cmap_count[i][j] += 1
-    # return divide(divide(cmap_v, cmap_count), divide(cmap_mod_n, cmap_count)),
-    # cmap_count, divide(cmap_mod_n, cmap_count)
     cmap_count[cmap_count < 1] = 0
-
     return cmap_v, cmap_count, cmap_mod_n
 
 
@@ -406,7 +400,7 @@ def plot_save_imshow(matrix, root_directory, name, resolution="5", logplot=False
     plt.imshow(matrix)
     plt.colorbar()
 
-    plt.title("(r*(r-1)^2)^0.25")
+    # plt.title("(r*(r-1)^2)^0.25")
     # plt.show()
     fig_name = os.path.join(root_directory, "imshow_" + child_dirname + '.png')
     plt.savefig(fig_name, bbox_inches='tight')
@@ -497,7 +491,6 @@ def process_one_day(pathA, pathB, star_dir, resolution, root=None,
     if root is None:
         root = os.path.dirname(os.path.dirname(pathA))
     save_matrices([day_data, day_count, day_cmap_n_mod], ["measure", "histogram", "n_mod"], root, resolution)
-    # print(day_data)
     plot_mollweid(day_count, star_directions_in_GCS, root, "histogram", str(int(degrees(resolution))), anot=True)
     plot_mollweid(divide(day_data, day_count), star_directions_in_GCS, root, "measure", str(int(degrees(resolution))),
                   anot=True)
@@ -668,10 +661,9 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_meth
 
 
 
-find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
 
 
-# ==================================================================================================================================================================================================
 # ==================================================================================================================================================================================================
 # ==================================================================================================================================================================================================
 # ==================================================================================================================================================================================================
@@ -684,9 +676,7 @@ def rebin(arr, new_shape):
 
 
 def get_matrix(path):
-    # print('Path: ', path)
-    M = pd.read_csv(path, skiprows=0).values[:, 1:]  # .transpose()[0]#.astype('float64')
-    return M
+    return pd.read_csv(path, skiprows=0).values[:, 1:]  # .transpose()[0]#.astype('float64')
 
 
 def get_csv_file(directory):
@@ -892,13 +882,8 @@ def create_averaged_plots_from_root(root_0):
 # plot_save_imshow(mean_all_hist, root_0, "mean_hist", logplot=True)
 
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/felezo_irany"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight"
-
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AminusB"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AplusB"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/r_only"
-
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_NplusD"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_NplusDxyz"
@@ -926,44 +911,69 @@ def clean_from_nans(matrix):
     return m
 
 
+def calc_correct_average(H, M, new_shape):
+    shape = (new_shape[0], H.shape[0] // new_shape[0], new_shape[1], H.shape[1] // new_shape[1])
+    H = nan_to_num(H, nan=0.0)
+    M = nan_to_num(M, nan=0.0)
+    MH = multiply(M, H)
+    MH = nan_to_num(MH, nan=0.0)
+    H_reshaped_summed = H.reshape(shape).sum(-1).sum(1)
+    # plt.imshow(MH)
+    # plt.colorbar()
+    # # plt.title("<|1-r|/|n|>")
+    # plt.show()
+    MH_reshaped_summed = MH.reshape(shape).sum(-1).sum(1)
+    reshaped = divide(MH_reshaped_summed, H_reshaped_summed)
+    # plt.clf()
+    # plt.imshow(reshaped)
+    # plt.colorbar()
+    # plt.title("<|1-r|/|n|>")
+    # plt.show()
+    return reshaped
+
+
 def plot_the_three_raw_matrix_from_path(path):
     csv_files = get_csv_file(path)
     cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
     M, H = modify_matrix_by_cond(cmap, hist)
-    # N = rotateAntiClockwise(nan_to_num(pd.read_csv(n_mod, na_filter= True).values[:,1:], nan=0.0))
     N = rotateAntiClockwise(nan_to_num(pd.read_csv(n_mod, na_filter=True).values[:, 1:], nan=0.0))
     ind_no_data = array(H < 1)
 
-    M[ind_no_data] = 0.0
+    M[ind_no_data] = nan
     N[ind_no_data] = 0.0
 
     H[H < 1] = 0
-    M[M < 0] = 0
-    N[N < 0] = 0
 
-    nan_to_num(H, nan=0.0)
-    nan_to_num(M, nan=0.0)
-    nan_to_num(N, nan=0.0)
+    # # N[N<0]=0
+
+    # nan_to_num(H, nan=0.0)
+    # nan_to_num(M, nan=0.0)
+    # nan_to_num(N, nan=0.0)
 
     M = divide(M, H)
-    N = divide(N, H)
-    N = nan_to_num(N, nan=0.0)
-    M = nan_to_num(M, nan=0)
+    # N = divide(N, H)
+    # N = nan_to_num(N, nan=0.0)
+    # M = nan_to_num(M, nan=0)
+    # M = absolute(M)
+    # M[absolute(M)>0.008] = nan
 
-    M[M > 0.03] = 0
+    # M = clean_from_nans(M)
+    # M[M>0.005]=0
+    a = 2
+    b = a  # * 2
+    # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
+    M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
-    M = clean_from_nans(M)
+    M[M == 0] = nan
+    M[M > 0] = nan
+    # M[M>0]=2
+    # H = log(H)
+    # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
 
-    a = 4
-    b = a  # * 3
-    M = rebin(M, (int(len(M) / b), int(len(M[0]) / a)))
-
-    H = log(H)
-# plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
-# plt.imshow(M)
-# plt.colorbar()
-# plt.title("<|1-r|/|n|>")
-# plt.show()
+    plt.imshow(M)
+    plt.colorbar()
+    # plt.title("<|1-r|/|n|>")
+    plt.show()
 
 
 # M = rotate(M, -90)
@@ -972,6 +982,7 @@ def plot_the_three_raw_matrix_from_path(path):
 
 plot_the_three_raw_matrix_from_path(results_root)
 
-
-# nanolaseri si plasmonics
+# =================================================================================================================================================================
+# =================================================================================================================================================================
+# =================================================================================================================================================================
 
