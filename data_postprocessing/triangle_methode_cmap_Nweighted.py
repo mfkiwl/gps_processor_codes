@@ -264,6 +264,8 @@ def cartesian_to_spherical(vector):
         phi, theta, _ = pm.ecef2geodetic(vector[0], vector[1], vector[2])
         phi = 90 - degrees(arccos(scal(ECEF[2], vector)))
     return radians(theta), radians(phi)
+
+
 # =================================================================================================
 # =================================================================================================
 
@@ -645,9 +647,10 @@ resolution = radians(5.0)
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 # --------------------------------------------NZLD-PERTH--------------------------------------------
 place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/r_inv_r"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
+
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AminusB"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AplusB"
@@ -659,9 +662,7 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_meth
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/R_Rinv"
 
 
-
-
-# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
 
 
 # ==================================================================================================================================================================================================
@@ -723,7 +724,7 @@ def plot_mollweid_simple(matrix):
     plt.ylabel(r'$\phi$', fontsize=15)  # Bold font method without fontweight parameters
     pl.colorbar(fig)
     ax.grid()
-    # ax.contour(X,Y,Z,10,colors='k')
+    ax.contour(X,Y,Z,10,colors='k')
     pl.show()
 
 
@@ -845,6 +846,7 @@ def calc_correct_average(H, M, new_shape):
     # plt.show()
     return reshaped
 
+
 # =============================================================================================================================
 # =============================================================================================================================
 # =============================================================================================================================
@@ -864,7 +866,8 @@ def create_averaged_plots_from_root(root_0, months=None):
             for day_root in days_with_paths:
                 csv_files = get_csv_file(day_root)
                 cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
-                if (cmap and hist and n_mod) and (os.path.isfile(cmap) and os.path.isfile(hist) and os.path.isfile(n_mod)):
+                if (cmap and hist and n_mod) and (
+                        os.path.isfile(cmap) and os.path.isfile(hist) and os.path.isfile(n_mod)):
                     M, H, N = get_matrices_from_paths([cmap, hist, n_mod])
                     sum_all_cmap.append(M)
                     sum_all_hist.append(H)
@@ -902,7 +905,7 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
     # M = clean_from_nans(M)
     # M[M>0.005]=0
-    a = 3
+    a = 4
     b = a  # * 2
     # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
@@ -915,19 +918,20 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
     plt.imshow(M)
     plt.colorbar()
+    # plot_mollweid_simple(M)
     # plt.title("<|1-r|/|n|>")
     plt.show()
+
 
 
 results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r"
 
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
-               "november", "majus", "aprilis" , "junius", "december2020"]
+               "november", "majus", "aprilis", "junius", "december2020"]
 months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar"]
 
-
-m, h, n = create_averaged_plots_from_root(results_root, month_names)
-handle_raw_not_averaged_matrices(m, h, n)
+# m, h, n = create_averaged_plots_from_root(results_root, month_names)
+# handle_raw_not_averaged_matrices(m, h, n)
 
 
 def plot_the_three_raw_matrix_from_path(path):
@@ -984,3 +988,79 @@ def plot_the_three_raw_matrix_from_path(path):
 # =================================================================================================================================================================
 # =================================================================================================================================================================
 
+
+# =====================================================================================
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+from matplotlib import cm
+
+
+def random_point(r=1):
+    ct = 2 * np.random.rand() - 1
+    st = np.sqrt(1 - ct ** 2)
+    phi = 2 * np.pi * np.random.rand()
+    x = r * st * np.cos(phi)
+    y = r * st * np.sin(phi)
+    z = r * ct
+    return np.array([x, y, z])
+
+
+def near(p, pntList, d0):
+    cnt = 0
+    for pj in pntList:
+        dist = np.linalg.norm(p - pj)
+        if dist < d0:
+            cnt += 1 - dist / d0
+    return cnt
+
+
+"""
+https://stackoverflow.com/questions/22128909/plotting-the-temperature-distribution-on-a-sphere-with-python
+"""
+
+
+def plot_on_sphere(WW):
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    # WW = get_mean_matrix(root_dir)
+
+    u = np.linspace(0, 2 * np.pi, len(WW))
+    v = np.linspace(0, np.pi, len(WW[0]))
+
+    # create the sphere surface
+    XX = 10 * np.outer(np.cos(u), np.sin(v))
+    YY = 10 * np.outer(np.sin(u), np.sin(v))
+    ZZ = 10 * np.outer(np.ones(np.size(u)), np.cos(v))
+
+    WW = WW + abs(np.amin(WW))
+    myheatmap = WW / np.amax(WW)
+
+    # ~ ax.scatter( *zip( *pointList ), color='#dd00dd' )
+    ax.plot_surface(XX, YY, ZZ, cstride=1, rstride=1, facecolors=cm.jet(myheatmap))
+    # plt.colorbar(cm.jet( myheatmap ))
+    plt.show()
+
+
+def prepear_for_sphere(m, h):
+    ind_no_data = array(h < 1)
+    m[ind_no_data] = 0
+    h[h < 1] = 0
+    nan_to_num(h, nan=0.0)
+    nan_to_num(m, nan=0.0)
+    M = divide(m, h)
+    M = nan_to_num(M, nan=0)
+    a = 3
+    b = a  # * 2
+    M = calc_correct_average(h, M, (int(len(M) / b), int(len(M[0]) / a)))
+    M = nan_to_num(M, nan=0)
+    M[M < 0] = -1
+    M[M > 0] = 1
+    return M
+
+
+# M = prepear_for_sphere(m, h)
+
+
+# plot_on_sphere(M)
+
+# =====================================================================================
