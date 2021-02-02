@@ -662,7 +662,7 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_meth
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/R_Rinv"
 
 
-find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
 
 
 # ==================================================================================================================================================================================================
@@ -716,7 +716,7 @@ def plot_mollweid_simple(matrix):
     X, Y = meshgrid(ra, dec)
     Z = matrix.T
     plt.figure()
-    ax = pl.subplot(111)  # , projection = 'mollweide')
+    ax = pl.subplot(111, projection='mollweide')
     fig = ax.contourf(X, Y, Z, 100)
     # fig = ax.imshow(rot90(fliplr(matrix), -1))
 
@@ -724,7 +724,7 @@ def plot_mollweid_simple(matrix):
     plt.ylabel(r'$\phi$', fontsize=15)  # Bold font method without fontweight parameters
     pl.colorbar(fig)
     ax.grid()
-    ax.contour(X,Y,Z,10,colors='k')
+    # ax.contour(X,Y,Z,10,colors='k')
     pl.show()
 
 
@@ -918,10 +918,9 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
     plt.imshow(M)
     plt.colorbar()
-    # plot_mollweid_simple(M)
+    plot_mollweid_simple(M)
     # plt.title("<|1-r|/|n|>")
-    plt.show()
-
+    # plt.show()
 
 
 results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r"
@@ -1056,7 +1055,6 @@ def prepear_for_sphere(m, h):
     M[M < 0] = -1
     M[M > 0] = 1
     return M
-
 
 # M = prepear_for_sphere(m, h)
 
