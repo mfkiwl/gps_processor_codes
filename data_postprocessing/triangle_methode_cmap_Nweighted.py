@@ -783,10 +783,25 @@ f_d = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/test/2
 
 # read_matrix(f_d, f_h)
 
+
+def read_2d_matrix(file):
+    l = loadtxt(file, dtype="str", delimiter=',')
+    # with open(file, 'r') as f:
+    #     l = [[num for num in line.split(',')] for line in f]
+    # l = array(l)
+    l = l[1:]
+    l = l[:, 1:]
+    return rotateAntiClockwise(l.astype("float64"))
+    # return l.astype("float64")
+
 def get_matrices_from_paths(paths):
     matrices = []
     for matrix_path in paths:
-        matrices.append(rotateAntiClockwise(pd.read_csv(matrix_path).values[:, 1:]))
+        # matrix = rotateAntiClockwise(pd.read_csv(matrix_path, index_col=0, dtype='str').astype('float64').values)  # [:, 1:])
+        matrix = read_2d_matrix(matrix_path)
+        #  # matrix = rotateAntiClockwise(load(matrix_path, allow_pickle=True))
+        #  # matrix[matrix < 1] = 0
+        matrices.append(matrix)
     return matrices
 
 
@@ -869,9 +884,11 @@ def create_averaged_plots_from_root(root_0, months=None):
                 if (cmap and hist and n_mod) and (
                         os.path.isfile(cmap) and os.path.isfile(hist) and os.path.isfile(n_mod)):
                     M, H, N = get_matrices_from_paths([cmap, hist, n_mod])
+
                     sum_all_cmap.append(M)
                     sum_all_hist.append(H)
                     sum_all_n_mod.append(N)
+    print(hist, "\n", list(H[-1]), "\n", shape(array(H)))
     print("Total number of days:  ", len(sum_all_cmap))
     sum_all_cmap = sum(array(sum_all_cmap), axis=0)
     sum_all_hist = sum(array(sum_all_hist), axis=0)
@@ -879,6 +896,7 @@ def create_averaged_plots_from_root(root_0, months=None):
     # plot_save_imshow_3_maps([sum_all_cmap, sum_all_hist, sum_all_n_mod], ["|1-1/r|", "Histogram", "<n_mod>"],
     #                         root_0, resolution="5")
     # plot_save_imshow(sum_all_cmap, root_0, "|1-1/r|")
+    # print(sum_all_hist)
     return sum_all_cmap, sum_all_hist, sum_all_n_mod
 
 
@@ -905,22 +923,24 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
     # M = clean_from_nans(M)
     # M[M>0.005]=0
-    a = 4
+    a = 1
     b = a  # * 2
     # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
-    M[M == 0] = nan
-    M[M < 0] = 1
-    # M[M>0]=2
+    # M[M == 0] = 1
+    M = M * -1
+    M[M < 0] = -1
+    M[M>0] = 1
     # H = log(H)
     # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
 
     plt.imshow(M)
     plt.colorbar()
-    plot_mollweid_simple(M)
+
+    plot_mollweid_simple(M[::-1].T)
     # plt.title("<|1-r|/|n|>")
-    # plt.show()
+    plt.show()
 
 
 results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r"
@@ -929,8 +949,8 @@ month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "janua
                "november", "majus", "aprilis", "junius", "december2020"]
 months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar"]
 
-# m, h, n = create_averaged_plots_from_root(results_root, month_names)
-# handle_raw_not_averaged_matrices(m, h, n)
+m, h, n = create_averaged_plots_from_root(results_root, month_names)
+handle_raw_not_averaged_matrices(m, h, n)
 
 
 def plot_the_three_raw_matrix_from_path(path):
@@ -981,9 +1001,9 @@ def plot_the_three_raw_matrix_from_path(path):
 # plot_mollweid_simple(M)
 
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r"
-plot_the_three_raw_matrix_from_path(results_root)
+# plot_the_three_raw_matrix_from_path(results_root)
 
 # =================================================================================================================================================================
 # =================================================================================================================================================================
@@ -1050,7 +1070,7 @@ def prepear_for_sphere(m, h):
     nan_to_num(m, nan=0.0)
     M = divide(m, h)
     M = nan_to_num(M, nan=0)
-    a = 3
+    a = 1
     b = a  # * 2
     M = calc_correct_average(h, M, (int(len(M) / b), int(len(M[0]) / a)))
     M = nan_to_num(M, nan=0)
@@ -1058,9 +1078,9 @@ def prepear_for_sphere(m, h):
     M[M > 0] = 1
     return M
 
-# M = prepear_for_sphere(m, h)
+M = prepear_for_sphere(m, h)
 
 
-# plot_on_sphere(M)
+plot_on_sphere(M)
 
 # =====================================================================================

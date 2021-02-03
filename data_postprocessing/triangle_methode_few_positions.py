@@ -9,6 +9,8 @@ from vpython import rotate
 import pylab as pl
 import math
 from scipy.ndimage import rotate
+from scipy.linalg import norm as nrm
+import copy as cp
 
 s_o_l = 1.0  # 3.0*10**8
 
@@ -397,6 +399,9 @@ def plot_mollweid(matrix, star_directions, root_directory, name, resolution, ano
     # pl.show()
     fig_name1 = os.path.join(root_directory, 'GCS_' + child_dirname + "_" + name + "_" + resolution + '.png')
     pl.savefig(fig_name1, bbox_inches='tight')
+    plt.close('all')
+    plt.clf()
+    pl.clf()
 
 
 def plot_save_imshow(matrix, root_directory, name, resolution="5", logplot=False):
@@ -560,7 +565,7 @@ def get_same_days_folders(root, needed_files):
     return None, None
 
 
-def get_mean_pos_from_root(root_path, positions_file):
+def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
     positions = []
     month_folders = [f.path for f in os.scandir(root_path) if f.is_dir()]
     for month_root in month_folders:
@@ -568,9 +573,24 @@ def get_mean_pos_from_root(root_path, positions_file):
         for day_root in day_folders:
             day_root = os.path.join(day_root, "allsatellites")
             if is_all_data(day_root, [positions_file], add_allsatellites=False):
-                positions.append(get_mean_position(day_root, positions_file))
-    print("Number of days with positions determined and std of the positions: ", len(positions), std(array(positions), axis=0))
-    return mean(array(positions), axis=0)
+                mean_pos = get_mean_position(day_root, positions_file)
+                # if str(os.path.split(day_root)[-2]).split("/")[-1][:4] in ['NZLD', 'NZDL']:
+                if str(os.path.split(day_root)[-2]).split("/")[-1][:4] not in ['BLUF', 'HOKI', 'MAVL', 'LKTA', 'MTJO']:
+                    # print(str(os.path.split(day_root)[-2]).split("/")[-1], mean_pos)
+                    positions.append(mean_pos)
+    positions = array(positions)
+    std_pos = std(positions, axis=0)
+    print("Number of days with positions determined and std of the positions before filter: ", len(positions), std_pos)
+
+    std_pos_norm = sqrt(std_pos.dot(std_pos))
+    mean_ = mean(positions, axis=0)
+    distance_from_mean = nrm(positions - mean_, axis=1)
+    not_outlier = distance_from_mean < max_deviations * std_pos_norm
+    # print(not_outlier)
+    no_outliers = positions[not_outlier]
+    print("After filter: ", len(no_outliers), std(array(no_outliers), axis=0), "\n ")
+    print(mean(array(positions), axis=0), mean(array(no_outliers), axis=0))
+    return mean(array(no_outliers), axis=0)
 
 
 def find_corresponding_dirs_in_different_roots(root_A, root_B, day=False):
@@ -608,40 +628,51 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A)
-        mean_pos_B = get_mean_pos_from_root(path_B)
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0])
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.2)
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            print(month_name)
-            # condition = True  # month_name in ["augusztus", "november"]
-            # if condition:
-            # print(month_name)
+            condition = month_name in ["julius", "augusztus", "szeptember", "oktober", "december", "november"]
+            if condition:
+                print(month_name)
+                day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
+                for A_day, B_day in day_pairs:
 
-            day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
-            for A_day, B_day in day_pairs:
+                    date = str(os.path.split(B_day)[-1])[-8:]
 
-                date = str(os.path.split(B_day)[-1])[-8:]
+                    if is_all_data(A_day, needed_files[1:], True) and is_all_data(B_day, needed_files[1:], True):
+                        result_month = create_dir(result_path, month_name)
+                        result_day = create_dir(result_month, date)
+                        print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ",
+                              os.path.split(B_day)[-1],
+                              "\n", "Index of the process: ", d, "\n")
+                        A_day = os.path.join(A_day, "allsatellites")
+                        B_day = os.path.join(B_day, "allsatellites")
 
-                if is_all_data(A_day, needed_files[1:], True) and is_all_data(B_day, needed_files[1:], True):
-                    result_month = create_dir(result_path, month_name)
-                    result_day = create_dir(result_month, date)
-                    print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ", os.path.split(B_day)[-1],
-                          "\n", "Index of the process: ", d, "\n")
-                    A_day = os.path.join(A_day, "allsatellites")
-                    B_day = os.path.join(B_day, "allsatellites")
-                    if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
-                        value, hist, n_mod = process_one_day(A_day, B_day, star_dir, resolution, root=result_day,
-                                                             fill_out=0.0)
+                        posUA = cp.deepcopy(mean_pos_A)
+                        posUB = cp.deepcopy(mean_pos_B)
+                        if is_all_data(A_day, needed_files[:1]):
+                            print("Actual position considered for: {}".format(str(A_day).split("/")[-2]))
+                            posUA = get_mean_position(A_day, needed_files[0])
+                        if is_all_data(B_day, needed_files[:1]):
+                            print("Actual position considered for: {}".format(str(B_day).split("/")[-2]))
+                            posUB = get_mean_position(B_day, needed_files[0])
+
+                        if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
+                            value, hist, n_mod = process_one_day(A_day, B_day, star_dir, resolution, root=result_day,
+                                                                 fill_out=0.0)
+                        else:
+                            # print("Mean positoin will be considered! ", str(B_day).split("/")[-1])
+                            value, hist, n_mod = process_one_day(A_day, B_day, star_dir, resolution,
+                                                                 mean_positions=[posUA, posUB],
+                                                                 root=result_day,
+                                                                 fill_out=0.0)
+                        all_hist.append(hist)
+                        all_value.append(value)
+                        all_n_mod.append(n_mod)
+                        d += 1
                     else:
-                        value, hist, n_mod = process_one_day(A_day, B_day, star_dir, resolution,
-                                                             mean_positions=[mean_pos_A, mean_pos_B], root=result_day,
-                                                             fill_out=0.0)
-                    all_hist.append(hist)
-                    all_value.append(value)
-                    all_n_mod.append(n_mod)
-                    d += 1
-                else:
-                    print("\n Data not found for: ", date, "\n")
+                        print("\n Data not found for: ", date, "\n")
         all_hist = sum(array(all_hist), axis=0)
         all_value = sum(array(all_value), axis=0)
         all_n_mod = sum(array(all_n_mod), axis=0)
@@ -671,8 +702,8 @@ needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 
 # --------------------------------------------NZLD-PERTH--------------------------------------------
 place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/test"
 
 # --------------------------------------------KOREA-Hong-Kong--------------------------------------------
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
@@ -680,4 +711,4 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_meth
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/R_Rinv"
 
 
-# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
