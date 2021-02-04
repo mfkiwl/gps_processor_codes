@@ -903,7 +903,7 @@ def create_averaged_plots_from_root(root_0, months=None):
 def handle_raw_not_averaged_matrices(M, H, N):
     ind_no_data = array(H < 1)
 
-    M[ind_no_data] = nan
+    M[ind_no_data] = 0
     N[ind_no_data] = 0.0
 
     H[H < 1] = 0
@@ -923,7 +923,7 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
     # M = clean_from_nans(M)
     # M[M>0.005]=0
-    a = 1
+    a = 3
     b = a  # * 2
     # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
@@ -932,18 +932,20 @@ def handle_raw_not_averaged_matrices(M, H, N):
     M = M * -1
     M[M < 0] = -1
     M[M>0] = 1
+    print(M)
+    M = nan_to_num(M, nan=0)
     # H = log(H)
     # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
 
     plt.imshow(M)
     plt.colorbar()
 
-    plot_mollweid_simple(M[::-1].T)
+    # plot_mollweid_simple(M[::-1].T)
     # plt.title("<|1-r|/|n|>")
     plt.show()
 
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
 
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
                "november", "majus", "aprilis", "junius", "december2020"]
