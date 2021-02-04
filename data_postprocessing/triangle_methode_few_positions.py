@@ -632,7 +632,7 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
         mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = month_name in ["julius", "augusztus", "szeptember", "aprilis", "majus", "junius"]
+            condition = month_name in ["oktober", "november", "szeptember", "december"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)

@@ -923,17 +923,16 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
     # M = clean_from_nans(M)
     # M[M>0.005]=0
-    a = 3
+    a = 1
     b = a  # * 2
     # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
-    # M[M == 0] = 1
-    M = M * -1
+    # M = M * -1
     M[M < 0] = -1
     M[M>0] = 1
-    print(M)
-    M = nan_to_num(M, nan=0)
+
+    # M = nan_to_num(M, nan=0)
     # H = log(H)
     # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
 
@@ -947,11 +946,13 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
 results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
 
-month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
+all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
                "november", "majus", "aprilis", "junius", "december2020"]
-months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar"]
+months1 = ["julius", "szeptember", "augusztus", "november", "junius", "december2020"]
+months2 = ["majus", "februar", "marcius", "aprilis", "januar"]
 
-m, h, n = create_averaged_plots_from_root(results_root, month_names)
+
+m, h, n = create_averaged_plots_from_root(results_root, all_months)
 handle_raw_not_averaged_matrices(m, h, n)
 
 
@@ -1083,6 +1084,6 @@ def prepear_for_sphere(m, h):
 M = prepear_for_sphere(m, h)
 
 
-plot_on_sphere(M)
+# plot_on_sphere(M)
 
 # =====================================================================================
