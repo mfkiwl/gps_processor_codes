@@ -628,18 +628,17 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0])
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
         mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = month_name in ["oktober", "november", "szeptember", "december"]
+            condition = True  # month_name in ["oktober", "november", "szeptember", "december"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
                 for A_day, B_day in day_pairs:
 
                     date = str(os.path.split(B_day)[-1])[-8:]
-
                     if is_all_data(A_day, needed_files[1:], True) and is_all_data(B_day, needed_files[1:], True):
                         result_month = create_dir(result_path, month_name)
                         result_day = create_dir(result_month, date)
@@ -701,19 +700,24 @@ resolution = radians(5.0)
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 
 # --------------------------------------------NZLD-PERTH--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/test"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_BA"
 
 # --------------------------------------------KOREA-Hong-Kong--------------------------------------------
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
 # place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/R_Rinv"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
 
 # --------------------------------------------PERTH-Hong-Kong--------------------------------------------
-place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_BA"
+
+# --------------------------------------------NZLD-Hong-Kong--------------------------------------------
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
 
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
