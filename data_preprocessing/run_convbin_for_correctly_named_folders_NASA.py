@@ -3,7 +3,7 @@ import os
 
 def run_convbin(day_dir, output_dir):
     file_name = os.path.split(day_dir)[-1]
-    print(day_dir)
+    # print(day_dir)
     input_files = os.path.join(day_dir, "*.20o")
 
     nav_file = os.path.join(output_dir, file_name + ".nav")
@@ -15,8 +15,12 @@ def run_convbin(day_dir, output_dir):
     command1 = "{} -r rinex -f 3 -v 2.10 -od -os -oi -ot -ol -halfc -o {} -n {} {}".format(tool, obs_file, nav_file,
                                                                                            input_files)
     # print(command1)
-    os.system(command1)
-
+    if not os.path.isfile(obs_file):
+        # print(day_dir)
+        try:
+            os.system(command1)
+        except:
+            print("Problem with: ", day_dir )
     command2 = "rnx2rtkp -o {} -p 0 -f 3 -e {} {}".format(pos_file,  obs_file , nav_file)
     # os.system(command2)
 
@@ -28,7 +32,7 @@ def run_converting(root_path, output_dir):
         run_convbin(folder, output_dir)
 
 
-input_ = r"C:\SzabolcsKelemen\PhD\GPS\NASA\2020_extracted_collected"
-output = r"C:\SzabolcsKelemen\PhD\GPS\NASA\obs_files"
+input_ = r"C:\SzabolcsKelemen\PhD\GPS\NASA_extracted_collected"
+output = r"C:\SzabolcsKelemen\PhD\GPS\obs_files_NASA"
 
 run_converting(input_, output)
