@@ -929,8 +929,8 @@ def handle_raw_not_averaged_matrices(M, H, N):
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
     # M = M * -1
-    M[M < 0] = -1
-    M[M>0] = 1
+    # M[M < 0] = -1
+    # M[M>0] = 1
 
     # M = nan_to_num(M, nan=0)
     # H = log(H)
@@ -944,7 +944,7 @@ def handle_raw_not_averaged_matrices(M, H, N):
     plt.show()
 
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
 
 all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
                "november", "majus", "aprilis", "junius", "december2020"]

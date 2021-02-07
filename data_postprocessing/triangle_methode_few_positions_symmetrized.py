@@ -189,7 +189,6 @@ def process_one_epoch(posA, posB, data_from_common_sats):
     for sats in data_from_common_sats:
         # dirrection_value.append(calc_for_one_sattelite(posA, posB, sats))
         dirrection_value.append(calc_for_one_sattelite_beta(posA, posB, sats))
-
     return dirrection_value
 
 
@@ -323,7 +322,7 @@ def get_raw_results_using_mean_positions(pathA, pathB, mean_positions):
     dataA = prepare_u_and_s_positions(pathA, False)
     dataB = prepare_u_and_s_positions(pathB, False)
     comonAB = extract_common_sats(dataA, dataB)
-    raw_results = process_all(posA, posB, comonAB)
+    raw_results = process_all(posA, posB, comonAB)  # dictionary, keys are the index of the epochs
     return raw_results
 
 
@@ -485,8 +484,8 @@ def save_matrices(matrices, names, directory, resolution):
         print('Matrix.csv saved!: ', name)
 
 
-def process_one_day(pathA, pathB, star_dir, resolution, mean_positions=None, root=None,
-                    fill_out=0.0):  # fill_out=0.0 in case when the "r * (r-1)^2" values are in the data matrix
+def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positions=None, root=None,
+                                fill_out=0.0):  # fill_out=0.0 in case when the "r * (r-1)^2" values are in the data matrix
 
     Nx, Ny, Nz, S, D = get_global_stars(star_dir, os.path.dirname(pathB))
     l = len(Nx)
@@ -497,21 +496,24 @@ def process_one_day(pathA, pathB, star_dir, resolution, mean_positions=None, roo
                               'Denebola': get_mean_direction_over_time(array([Nx, Ny, Nz]), D)}
     # =================================================================================================================
     GCS_all = [array([Nx[i], Ny[i], Nz[i]]) for i in range(l)]
-    if mean_positions:
-        raw_results_ECEF = get_raw_results_using_mean_positions(pathA, pathB, mean_positions)
-    else:
-        raw_results_ECEF = get_raw_results(pathA, pathB)
 
-    groupped_raw_results_ECEF = group_results(raw_results_ECEF, l)
+    # -------------------------------Symmetrize the calculated measure-------------------------------------------------
+    raw_results_ECEF_AB = get_raw_results_using_mean_positions(pathA, pathB, mean_positions)
+    groupped_raw_results_ECEF_AB = group_results(raw_results_ECEF_AB, l)
+    groupped_raw_results_GCS_AB = raw_results_to_GCS(groupped_raw_results_ECEF_AB, GCS_all)
+    raw_results_GCS_AB = list(chain(*groupped_raw_results_GCS_AB))  # [::10000]
 
-    groupped_raw_results_GCS = raw_results_to_GCS(groupped_raw_results_ECEF, GCS_all)
+    raw_results_ECEF_BA = get_raw_results_using_mean_positions(pathB, pathA, mean_positions[::-1])
+    groupped_raw_results_ECEF_BA = group_results(raw_results_ECEF_BA, l)
+    groupped_raw_results_GCS_BA = raw_results_to_GCS(groupped_raw_results_ECEF_BA, GCS_all)
+    raw_results_GCS_BA = list(chain(*groupped_raw_results_GCS_BA))  # [::10000]
+    # -----------------------------------------------------------------------------------------------------------------
+    raw_results_GCS = raw_results_GCS_AB + raw_results_GCS_BA
 
-    raw_results_GCS = list(chain(*groupped_raw_results_GCS))  # [::10000]
     print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
     raw_n_v_nmod = pd.DataFrame(raw_results_GCS)
-    raw_n_v_nmod.to_csv(os.path.join(root, "GCS_Ndir_measure_Nmod.csv"), index=True)
+    raw_n_v_nmod.to_csv(os.path.join(root, "GCS_Ndir_measure_Nmod_AB_and_BA.csv"), index=True)
     del raw_n_v_nmod
-
 
     day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
 
@@ -520,7 +522,9 @@ def process_one_day(pathA, pathB, star_dir, resolution, mean_positions=None, roo
     day_count = nan_to_num(day_count, nan=fill_out)
 
     if root is None:
-        root = os.path.dirname(os.path.dirname(pathA))
+        print("No day_result directory is given...process stops here!")
+        sys.exit()
+
     save_matrices([day_data, day_count, day_cmap_n_mod], ["measure", "histogram", "n_mod"], root, resolution)
     plot_mollweid(day_count, star_directions_in_GCS, root, "histogram", str(int(degrees(resolution))), anot=True)
     plot_mollweid(divide(day_data, day_count), star_directions_in_GCS, root, "measure", str(int(degrees(resolution))),
@@ -632,14 +636,15 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5)  # NZLD eseten 0.2
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=0.5)
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.2)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = True  # month_name in ["augusztus", "oktober"]
+            condition = month_name in ["julius", "augusztus", "szeptember", "oktober"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
+                print("Number of days: ", len(day_pairs))
                 for A_day, B_day in day_pairs:
 
                     date = str(os.path.split(B_day)[-1])[-8:]
@@ -661,15 +666,14 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
                             print("Actual position considered for: {}".format(str(B_day).split("/")[-2]))
                             posUB = get_mean_position(B_day, needed_files[0])
 
-                        if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
-                            value, hist, n_mod = process_one_day(A_day, B_day, star_dir, resolution, root=result_day,
-                                                                 fill_out=0.0)
-                        else:
-                            # print("Mean positoin will be considered! ", str(B_day).split("/")[-1])
-                            value, hist, n_mod = process_one_day(A_day, B_day, star_dir, resolution,
-                                                                 mean_positions=[posUA, posUB],
-                                                                 root=result_day,
-                                                                 fill_out=0.0)
+                        # if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
+                        #     value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
+                        #                                                      root=result_day, fill_out=0.0)
+                        # else:
+                        #     # print("Mean positoin will be considered! ", str(B_day).split("/")[-1])
+                        value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
+                                                                         mean_positions=[posUA, posUB],
+                                                                         root=result_day, fill_out=0.0)
                         all_hist.append(hist)
                         all_value.append(value)
                         all_n_mod.append(n_mod)
@@ -708,10 +712,16 @@ needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_BA"
 
+# --------------------------------------------NZLD-PERTH-symmetrized-------------------------------------------
+place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
+
+# ======================================================================================================================
 # --------------------------------------------KOREA-Hong-Kong--------------------------------------------
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
-place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_BA"
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
 
 # --------------------------------------------PERTH-Hong-Kong--------------------------------------------
 # place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
