@@ -512,7 +512,6 @@ def process_one_day(pathA, pathB, star_dir, resolution, mean_positions=None, roo
     raw_n_v_nmod.to_csv(os.path.join(root, "GCS_Ndir_measure_Nmod.csv"), index=True)
     del raw_n_v_nmod
 
-
     day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
 
     day_data = nan_to_num(day_data, nan=fill_out)
@@ -594,6 +593,8 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
     no_outliers = positions[not_outlier]
     print("After filter: ", len(no_outliers), std(array(no_outliers), axis=0), "\n ")
     print(mean(array(positions), axis=0), mean(array(no_outliers), axis=0))
+    # print(dr_lenght(mean(array(positions), axis=0), mean(array(no_outliers), axis=0)))
+
     return mean(array(no_outliers), axis=0)
 
 
@@ -723,5 +724,15 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_meth
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
 
+# # --------------------------------------------PERTH-Del-korea--------------------------------------------
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
 
-find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+
+
+# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+
+
+# mean_pos_A = get_mean_pos_from_root(place_A, needed_files[0], max_deviations=5)
+_ = get_mean_pos_from_root(place_B, needed_files[0], max_deviations=5)

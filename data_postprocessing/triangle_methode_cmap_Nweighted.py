@@ -794,6 +794,7 @@ def read_2d_matrix(file):
     return rotateAntiClockwise(l.astype("float64"))
     # return l.astype("float64")
 
+
 def get_matrices_from_paths(paths):
     matrices = []
     for matrix_path in paths:
@@ -888,7 +889,7 @@ def create_averaged_plots_from_root(root_0, months=None):
                     sum_all_cmap.append(M)
                     sum_all_hist.append(H)
                     sum_all_n_mod.append(N)
-    print(hist, "\n", list(H[-1]), "\n", shape(array(H)))
+    # print(hist, "\n", list(H[-1]), "\n", shape(array(H)))
     print("Total number of days:  ", len(sum_all_cmap))
     sum_all_cmap = sum(array(sum_all_cmap), axis=0)
     sum_all_hist = sum(array(sum_all_hist), axis=0)
@@ -902,7 +903,6 @@ def create_averaged_plots_from_root(root_0, months=None):
 
 def handle_raw_not_averaged_matrices(M, H, N):
     ind_no_data = array(H < 1)
-
     M[ind_no_data] = 0
     N[ind_no_data] = 0.0
 
@@ -929,8 +929,8 @@ def handle_raw_not_averaged_matrices(M, H, N):
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
     # M = M * -1
-    # M[M < 0] = -1
-    # M[M>0] = 1
+    M[M < 0] = -1
+    M[M > 0] = 1
 
     # M = nan_to_num(M, nan=0)
     # H = log(H)
@@ -944,15 +944,28 @@ def handle_raw_not_averaged_matrices(M, H, N):
     plt.show()
 
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_BA"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_AB"
+
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_BA"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_AB"
+#
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
+
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_AB"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_BA"
+
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
+
 
 all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
-               "november", "majus", "aprilis", "junius", "december2020"]
+              "november", "majus", "aprilis", "junius", "december2020"]
 months1 = ["julius", "szeptember", "augusztus", "november", "junius", "december2020"]
 months2 = ["majus", "februar", "marcius", "aprilis", "januar"]
+months3 = ["februar", "marcius"]
 
-
-m, h, n = create_averaged_plots_from_root(results_root, all_months)
+m, h, n = create_averaged_plots_from_root(results_root, months3)
 handle_raw_not_averaged_matrices(m, h, n)
 
 
@@ -1081,7 +1094,7 @@ def prepear_for_sphere(m, h):
     M[M > 0] = 1
     return M
 
-M = prepear_for_sphere(m, h)
+# M = prepear_for_sphere(m, h)
 
 
 # plot_on_sphere(M)
