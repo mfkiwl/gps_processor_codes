@@ -1,3 +1,5 @@
+import time
+
 from numpy import *
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,8 +11,12 @@ from vpython import rotate
 import pylab as pl
 import math
 from scipy.ndimage import rotate
+from scipy.linalg import norm as nrm
+import copy as cp
 
 s_o_l = 1.0  # 3.0*10**8
+# satellite_positions = "all_sats_pos_time.csv"
+satellite_positions = "sats_pos_time_id.csv"
 
 
 def rotateAntiClockwise(array):
@@ -82,7 +88,7 @@ def group_results(results_dict, l):
     return groupped
 
 
-def parse_sats_data(sat_data_file):
+def parse_sats_data_alpha(sat_data_file):
     data = {}
     epoch = []
     with open(sat_data_file) as in_file:
@@ -96,11 +102,25 @@ def parse_sats_data(sat_data_file):
     return data
 
 
+def parse_sats_data(sat_data_file):
+    data = {}
+    epoch = []
+    with open(sat_data_file) as in_file:
+        lineList = [line.rstrip('\n').split(",") for line in in_file]
+        for line in lineList[1:]:
+            if line[0][0] == "E":
+                data[line[-2]] = epoch
+                epoch = []
+                continue
+            epoch.append([float(line[0]), float(line[1]), float(line[2]), float(line[3]), line[4]])
+    return data
+
+
 def dr_lenght(v1, v2):
     return sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
 
 
-def get_comon(vA, vB):
+def get_comon_alpha(vA, vB):
     data = []
     for a in vA:
         # print(a)
@@ -108,14 +128,34 @@ def get_comon(vA, vB):
             if dr_lenght(a[:3], b[:3]) < 500:
                 # print(dr_lenght(a[:3], b[:3]))
                 data.append([a, b])
+                break
     return data
 
 
-def prepare_data(path):
-    user_ = pd.read_csv(path + '/user_pos_allsatellites.csv', skiprows=1).values  # .transpose()
-    user_mean = mean(user_, axis=0).astype('float64')
-    sat_data = parse_sats_data(os.path.join(path, "all_sats_pos_time.csv"))
-    return user_mean, sat_data
+def get_comon(vA, vB):
+    data = []
+    for a in vA:
+        # print(a)
+        for b in vB:
+            if a[4] == b[4]:
+                # print(dr_lenght(a[:3], b[:3]))
+                data.append([a, b])
+                break
+    return data
+
+
+def prepare_u_and_s_positions(path, get_u=True):
+    sat_data = parse_sats_data(os.path.join(path, satellite_positions))
+    if get_u:
+        user_ = pd.read_csv(path + '/user_pos_allsatellites.csv', skiprows=1).values  # .transpose()
+        user_mean = mean(user_, axis=0).astype('float64')
+        return user_mean, sat_data
+    return sat_data
+
+
+def get_mean_position(path, positions_file):
+    user_ = pd.read_csv(os.path.join(path, positions_file), skiprows=1).values  # .transpose()
+    return mean(user_, axis=0).astype('float64')
 
 
 def extract_common_sats(satA, satB):
@@ -124,6 +164,7 @@ def extract_common_sats(satA, satB):
         vB = satB.get(kA, None)
         if vB:
             comon = get_comon(vA, vB)
+            print(len(comon))
             comon_parts[kA] = comon
     return comon_parts
 
@@ -180,7 +221,6 @@ def process_one_epoch(posA, posB, data_from_common_sats):
     for sats in data_from_common_sats:
         # dirrection_value.append(calc_for_one_sattelite(posA, posB, sats))
         dirrection_value.append(calc_for_one_sattelite_beta(posA, posB, sats))
-
     return dirrection_value
 
 
@@ -301,10 +341,20 @@ def get_third_dir_by_cross_product(A, B):
 
 
 def get_raw_results(pathA, pathB):
-    posA, dataA = prepare_data(pathA)
-    posB, dataB = prepare_data(pathB)
+    posA, dataA = prepare_u_and_s_positions(pathA)
+    posB, dataB = prepare_u_and_s_positions(pathB)
     comonAB = extract_common_sats(dataA, dataB)
     raw_results = process_all(posA, posB, comonAB)
+    return raw_results
+
+
+def get_raw_results_using_mean_positions(pathA, pathB, mean_positions):
+    posA = mean_positions[0]
+    posB = mean_positions[1]
+    dataA = prepare_u_and_s_positions(pathA, False)
+    dataB = prepare_u_and_s_positions(pathB, False)
+    comonAB = extract_common_sats(dataA, dataB)
+    raw_results = process_all(posA, posB, comonAB)  # dictionary, keys are the index of the epochs
     return raw_results
 
 
@@ -380,6 +430,9 @@ def plot_mollweid(matrix, star_directions, root_directory, name, resolution, ano
     # pl.show()
     fig_name1 = os.path.join(root_directory, 'GCS_' + child_dirname + "_" + name + "_" + resolution + '.png')
     pl.savefig(fig_name1, bbox_inches='tight')
+    plt.close('all')
+    plt.clf()
+    pl.clf()
 
 
 def plot_save_imshow(matrix, root_directory, name, resolution="5", logplot=False):
@@ -463,8 +516,8 @@ def save_matrices(matrices, names, directory, resolution):
         print('Matrix.csv saved!: ', name)
 
 
-def process_one_day(pathA, pathB, star_dir, resolution, root=None,
-                    fill_out=0.0):  # fill_out=0.0 in case when the "r * (r-1)^2" values are in the data matrix
+def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positions=None, root=None,
+                                fill_out=0.0):  # fill_out=0.0 in case when the "r * (r-1)^2" values are in the data matrix
 
     Nx, Ny, Nz, S, D = get_global_stars(star_dir, os.path.dirname(pathB))
     l = len(Nx)
@@ -475,14 +528,24 @@ def process_one_day(pathA, pathB, star_dir, resolution, root=None,
                               'Denebola': get_mean_direction_over_time(array([Nx, Ny, Nz]), D)}
     # =================================================================================================================
     GCS_all = [array([Nx[i], Ny[i], Nz[i]]) for i in range(l)]
-    raw_results_ECEF = get_raw_results(pathA, pathB)
 
-    groupped_raw_results_ECEF = group_results(raw_results_ECEF, l)
+    # -------------------------------Symmetrize the calculated measure-------------------------------------------------
+    raw_results_ECEF_AB = get_raw_results_using_mean_positions(pathA, pathB, mean_positions)
+    groupped_raw_results_ECEF_AB = group_results(raw_results_ECEF_AB, l)
+    groupped_raw_results_GCS_AB = raw_results_to_GCS(groupped_raw_results_ECEF_AB, GCS_all)
+    raw_results_GCS_AB = list(chain(*groupped_raw_results_GCS_AB))  # [::10000]
 
-    groupped_raw_results_GCS = raw_results_to_GCS(groupped_raw_results_ECEF, GCS_all)
+    raw_results_ECEF_BA = get_raw_results_using_mean_positions(pathB, pathA, mean_positions[::-1])
+    groupped_raw_results_ECEF_BA = group_results(raw_results_ECEF_BA, l)
+    groupped_raw_results_GCS_BA = raw_results_to_GCS(groupped_raw_results_ECEF_BA, GCS_all)
+    raw_results_GCS_BA = list(chain(*groupped_raw_results_GCS_BA))  # [::10000]
+    # -----------------------------------------------------------------------------------------------------------------
+    raw_results_GCS = raw_results_GCS_AB + raw_results_GCS_BA
 
-    raw_results_GCS = list(chain(*groupped_raw_results_GCS))  # [::10000]
     print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
+    raw_n_v_nmod = pd.DataFrame(raw_results_GCS)
+    raw_n_v_nmod.to_csv(os.path.join(root, "GCS_Ndir_measure_Nmod_AB_and_BA.csv"), index=True)
+    del raw_n_v_nmod
 
     day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
 
@@ -491,7 +554,9 @@ def process_one_day(pathA, pathB, star_dir, resolution, root=None,
     day_count = nan_to_num(day_count, nan=fill_out)
 
     if root is None:
-        root = os.path.dirname(os.path.dirname(pathA))
+        print("No day_result directory is given...process stops here!")
+        sys.exit()
+
     save_matrices([day_data, day_count, day_cmap_n_mod], ["measure", "histogram", "n_mod"], root, resolution)
     plot_mollweid(day_count, star_directions_in_GCS, root, "histogram", str(int(degrees(resolution))), anot=True)
     plot_mollweid(divide(day_data, day_count), star_directions_in_GCS, root, "measure", str(int(degrees(resolution))),
@@ -540,21 +605,32 @@ def get_same_days_folders(root, needed_files):
     return None, None
 
 
-# def process_one_day_from_root(path, needed_files, star_dir, resolution):
-#     folderA, folderB = get_same_days_folders(path, needed_files)
-#
-#     if folderA:
-#         print("\n\n Data will be processed in: ", path, "\n\n")
-#         process_one_day(folderA, folderB, star_dir, resolution)
-#         return True
-#     print("\n\n Data not found in: ", path, "\n\n")
-#     return False
+def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
+    positions = []
+    month_folders = [f.path for f in os.scandir(root_path) if f.is_dir()]
+    for month_root in month_folders:
+        day_folders = [f.path for f in os.scandir(month_root) if f.is_dir()]
+        for day_root in day_folders:
+            day_root = os.path.join(day_root, "allsatellites")
+            if is_all_data(day_root, [positions_file], add_allsatellites=False):
+                mean_pos = get_mean_position(day_root, positions_file)
+                # if str(os.path.split(day_root)[-2]).split("/")[-1][:4] in ['NZLD', 'NZDL']:
+                if str(os.path.split(day_root)[-2]).split("/")[-1][:4] not in ['BLUF', 'HOKI', 'MAVL', 'LKTA', 'MTJO']:
+                    # print(str(os.path.split(day_root)[-2]).split("/")[-1], mean_pos)
+                    positions.append(mean_pos)
+    positions = array(positions)
+    std_pos = std(positions, axis=0)
+    print("Number of days with positions determined and std of the positions before filter: ", len(positions), std_pos)
 
-
-# def process_many_days_from_root(root_directory, needed_files, star_dir, resolution):
-#     list_subfolders_with_paths = [f.path for f in os.scandir(root_directory) if f.is_dir()]
-#     for day_path in list_subfolders_with_paths:
-#         process_one_day_from_root(day_path, needed_files, star_dir, resolution)
+    std_pos_norm = sqrt(std_pos.dot(std_pos))
+    mean_ = mean(positions, axis=0)
+    distance_from_mean = nrm(positions - mean_, axis=1)
+    not_outlier = distance_from_mean < max_deviations * std_pos_norm
+    # print(not_outlier)
+    no_outliers = positions[not_outlier]
+    print("After filter: ", len(no_outliers), std(array(no_outliers), axis=0), "\n ")
+    print(mean(array(positions), axis=0), mean(array(no_outliers), axis=0))
+    return mean(array(no_outliers), axis=0)
 
 
 def find_corresponding_dirs_in_different_roots(root_A, root_B, day=False):
@@ -592,33 +668,51 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.5)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            print(month_name)
-            # condition = True  # month_name in ["augusztus", "november"]
-            # if condition:
-            # print(month_name)
+            condition = True  # month_name in ["januar", "februar"]  # , "marcius", "aprilis", "majus", "junius", "november"]
+            if condition:
+                print(month_name)
+                day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
+                print("Number of days: ", len(day_pairs))
+                for A_day, B_day in day_pairs:
+                    start = time.time()
+                    date = str(os.path.split(B_day)[-1])[-8:]
+                    if is_all_data(A_day, needed_files[1:], True) and is_all_data(B_day, needed_files[1:], True):
+                        result_month = create_dir(result_path, month_name)
+                        result_day = create_dir(result_month, date)
+                        print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ",
+                              os.path.split(B_day)[-1],
+                              "\n", "Index of the process: ", d, "\n")
+                        A_day = os.path.join(A_day, "allsatellites")
+                        B_day = os.path.join(B_day, "allsatellites")
 
-            day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
-            for A_day, B_day in day_pairs:
+                        posUA = cp.deepcopy(mean_pos_A)
+                        posUB = cp.deepcopy(mean_pos_B)
+                        if is_all_data(A_day, needed_files[:1]):
+                            print("Actual position considered for: {}".format(str(A_day).split("/")[-2]))
+                            posUA = get_mean_position(A_day, needed_files[0])
+                        if is_all_data(B_day, needed_files[:1]):
+                            print("Actual position considered for: {}".format(str(B_day).split("/")[-2]))
+                            posUB = get_mean_position(B_day, needed_files[0])
 
-                date = str(os.path.split(B_day)[-1])[-8:]
-
-                if is_all_data(A_day, needed_files, True) and is_all_data(B_day, needed_files, True):
-                    result_month = create_dir(result_path, month_name)
-                    result_day = create_dir(result_month, date)
-                    print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ", os.path.split(B_day)[-1],
-                          "\n", "Index of the process: ", d, "\n")
-                    A_day = os.path.join(A_day, "allsatellites")
-                    B_day = os.path.join(B_day, "allsatellites")
-                    value, hist, n_mod = process_one_day(A_day, B_day, star_dir, resolution, root=result_day,
-                                                         fill_out=0.0)
-                    all_hist.append(hist)
-                    all_value.append(value)
-                    all_n_mod.append(n_mod)
-                    d += 1
-                else:
-                    print("\n Data not found for: ", date, "\n")
+                        # if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
+                        #     value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
+                        #                                                      root=result_day, fill_out=0.0)
+                        # else:
+                        #     # print("Mean positoin will be considered! ", str(B_day).split("/")[-1])
+                        value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
+                                                                         mean_positions=[posUA, posUB],
+                                                                         root=result_day, fill_out=0.0)
+                        all_hist.append(hist)
+                        all_value.append(value)
+                        all_n_mod.append(n_mod)
+                        d += 1
+                    else:
+                        print("\n Data not found for: ", date, "\n")
+                    print('Elapsed time of the current day: ', time.time() - start, date)
         all_hist = sum(array(all_hist), axis=0)
         all_value = sum(array(all_value), axis=0)
         all_n_mod = sum(array(all_n_mod), axis=0)
@@ -644,459 +738,63 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
 
 star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
 resolution = radians(5.0)
-needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
-# --------------------------------------------NZLD-PERTH--------------------------------------------
-place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
+# ======================================================================================================================
+
+# --------------------------------------------PERTH-Hong-Kong--------------------------------------------
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
+
+# --------------------------------------------NZLD-Hong-Kong-------------------------------------------- [*******]
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
 
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AminusB"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_AplusB"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/automatic_processing_no_weight_NplusDxyz"
+# --------------------------------------------PERTH-Del-korea-symmetrized--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
+
+# --------------------------------------------PERTH-India-symmetrized--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
+
+# --------------------------------------------NZLD-India-symmetrized--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
+
+
+# --------------------------------------------NZLD-Del-korea-symmetrized--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
+
+# --------------------------------------------NZLD-PERTH-symmetrized-------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
 
 # --------------------------------------------KOREA-Hong-Kong--------------------------------------------
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
 # place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/R_Rinv"
+# # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
 
 
-# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+# # --------------------------------------------KOREA-India--------------------------------------------
+place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/pairs_by_identifier/NASA_IIGC/r_inv_r_symmetrized"
 
 
-# ==================================================================================================================================================================================================
-# ==================================================================================================================================================================================================
-# ==================================================================================================================================================================================================
+# --------------------------------------------Hong-Kong-India--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC_/r_inv_r_symmetrized"
 
-
-def rebin(arr, new_shape):
-    shape = (new_shape[0], arr.shape[0] // new_shape[0],
-             new_shape[1], arr.shape[1] // new_shape[1])
-    return arr.reshape(shape).mean(-1).mean(1)
-
-
-def get_matrix(path):
-    return pd.read_csv(path, skiprows=0).values[:, 1:]  # .transpose()[0]#.astype('float64')
-
-
-def get_csv_file(directory):
-    csv_ext = ".csv"
-    # files = next(os.walk(directory))[2]
-    files = [f.path for f in os.scandir(directory) if f.is_file()]
-
-    files_with_path = []
-    for file in files:
-        if os.path.splitext(file)[1] == csv_ext:
-            files_with_path.append(os.path.abspath(os.path.join(directory, file)))
-    # print(files_with_path)
-    return files_with_path
-
-
-def select_cmap_hist_n_mod(file_list):
-    hist = None
-    cmap = None
-    n_mod = None
-    for file in file_list:
-        if "histogram_not_averaged" in str(os.path.split(file)[-1]):
-            hist = file
-        if "measure_not_averaged" in str(os.path.split(file)[-1]) or "measure" in str(os.path.split(file)[-1]):
-            cmap = file
-        if "n_mod_not_averaged" in str(os.path.split(file)[-1]):
-            n_mod = file
-    # print(hist)
-    # print(n_mod)
-    return cmap, hist, n_mod
-
-
-def plot_mollweid_simple(matrix):
-    ra = linspace(-math.pi, math.pi, len(matrix))
-    dec = linspace(-math.pi / 2, math.pi / 2, len(matrix[0]))
-
-    X, Y = meshgrid(ra, dec)
-    Z = matrix.T
-    plt.figure()
-    ax = pl.subplot(111, projection='mollweide')
-    fig = ax.contourf(X, Y, Z, 100)
-    # fig = ax.imshow(rot90(fliplr(matrix), -1))
-
-    plt.xlabel(r'$\theta$', fontsize=15)  # Italic font method
-    plt.ylabel(r'$\phi$', fontsize=15)  # Bold font method without fontweight parameters
-    pl.colorbar(fig)
-    ax.grid()
-    # ax.contour(X,Y,Z,10,colors='k')
-    pl.show()
-
-
-def plot_more(path):
-    csv_s = get_csv_file(path)
-    M = []
-    for f in csv_s:
-        a = get_matrix(f)
-        # print(shape(a))
-        M.append(a)
-
-    mm = zeros(shape(M[0]))
-    for m in M:
-        mm += m
-    M = mm / float(len(M))
-    # M = mean(M, axis=0)
-
-    plot_mollweid_simple(M)
-    M = rotateAntiClockwise(M)
-    a = 6
-    b = a  # * 2
-    M = rebin(M, (int(len(M) / b), int(len(M[0]) / a)))
-    plt.imshow(M)
-    plt.colorbar()
-    plt.show()
-
-
-# path = r"/Users/kelemensz/Documents/Research/GPS/process/24h/triangular_method/data_GS__24h_cmap.csv"
-path = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/atlagolt"
-path = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/test/20200803/data_GS_20200803_24h_histogram_5.csv"
-path = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/test/20200803/data_GS_20200803_24h_cmap_5.csv"
-
-
-# plot_more(path)
-
-def read_matrix(path):
-    M = rotateAntiClockwise(pd.read_csv(path).values)
-    # M = M[M<0.2]
-    M = M[:-1, :-1]
-    nn = zeros(shape(M))
-    # M = nn + M[M<0.2]
-    M[M > 0.1] = 0
-    # M = log(M+1.0)
-    # M = around(M, decimals=0)
-
-    plt.imshow(M)
-    plt.colorbar()
-    plt.show()
-
-
-# read_matrix(path)
-
-f_h = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/test/20200803/data_GS_20200803_24h_histogram_5.csv"
-f_d = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/test/20200803/data_GS_20200803_24h_cmap_5.csv"
-
-
-# read_matrix(f_d, f_h)
-
-
-def read_2d_matrix(file):
-    l = loadtxt(file, dtype="str", delimiter=',')
-    # with open(file, 'r') as f:
-    #     l = [[num for num in line.split(',')] for line in f]
-    # l = array(l)
-    l = l[1:]
-    l = l[:, 1:]
-    return rotateAntiClockwise(l.astype("float64"))
-    # return l.astype("float64")
-
-
-def get_matrices_from_paths(paths):
-    matrices = []
-    for matrix_path in paths:
-        # matrix = rotateAntiClockwise(pd.read_csv(matrix_path, index_col=0, dtype='str').astype('float64').values)  # [:, 1:])
-        matrix = read_2d_matrix(matrix_path)
-        #  # matrix = rotateAntiClockwise(load(matrix_path, allow_pickle=True))
-        #  # matrix[matrix < 1] = 0
-        matrices.append(matrix)
-    return matrices
-
-
-def plot_save_imshow_2_maps(matrix1, matrix2, root_directory, name, resolution="5", logplot=True):
-    print('Matrix.csv saved: ', name, "   ", os.path.split(root_directory)[-1])
-    child_dirname = os.path.split(root_directory)[-1] + "_" + name + '_24h' + "_" + resolution
-    plt.clf()
-    if logplot:
-        matrix1 = around(log(matrix1 + 1.0), decimals=0)
-
-    fig, (ax1, ax2) = plt.subplots(2, 1)
-    fig.subplots_adjust(left=0.02, bottom=0.1, right=0.95, top=0.94, wspace=0.5, hspace=0.3)
-    sp1 = ax1.imshow(matrix1)
-    # print(root_directory, "\n", shape(matrix1))
-    ax1.set_title("Histogram")
-    sp2 = ax2.imshow(matrix2)
-    ax2.set_title("r*(r-1)^2")
-    fig.colorbar(sp1, ax=ax1)
-    fig.colorbar(sp2, ax=ax2)
-    # plt.show()
-    fig_name = os.path.join(root_directory, child_dirname + '.png')
-    fig.savefig(fig_name, bbox_inches='tight')
-    plt.clf()
-
-
-def clean_from_nans(matrix):
-    m = []
-    for i in matrix:
-        mm = []
-        for j in i:
-            mm.append(j)
-        m.append(mm)
-        mm = []
-    nan_to_num(m, nan=0.0)
-    m = array(m)
-    m[m > 0.035] = 0
-    return m
-
-
-def calc_correct_average(H, M, new_shape):
-    shape = (new_shape[0], H.shape[0] // new_shape[0], new_shape[1], H.shape[1] // new_shape[1])
-    H = nan_to_num(H, nan=0.0)
-    M = nan_to_num(M, nan=0.0)
-    MH = multiply(M, H)
-    MH = nan_to_num(MH, nan=0.0)
-    H_reshaped_summed = H.reshape(shape).sum(-1).sum(1)
-    # plt.imshow(MH)
-    # plt.colorbar()
-    # # plt.title("<|1-r|/|n|>")
-    # plt.show()
-    MH_reshaped_summed = MH.reshape(shape).sum(-1).sum(1)
-    reshaped = divide(MH_reshaped_summed, H_reshaped_summed)
-    # plt.clf()
-    # plt.imshow(reshaped)
-    # plt.colorbar()
-    # plt.title("<|1-r|/|n|>")
-    # plt.show()
-    return reshaped
-
-
-# =============================================================================================================================
-# =============================================================================================================================
-# =============================================================================================================================
-
-
-def create_averaged_plots_from_root(root_0, months=None):
-    sum_all_cmap = []
-    sum_all_hist = []
-    sum_all_n_mod = []
-    subfolders_with_paths_months = [f.path for f in os.scandir(root_0) if f.is_dir()]
-    for month_root in subfolders_with_paths_months:
-        month_name = str(month_root).split("/")[-1]
-        if months and month_name in months:
-
-            days_with_paths = [f.path for f in os.scandir(month_root) if f.is_dir()]
-            print("Month name: ", month_name, "  nr days: ", len(days_with_paths))
-            for day_root in days_with_paths:
-                csv_files = get_csv_file(day_root)
-                cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
-                if (cmap and hist and n_mod) and (
-                        os.path.isfile(cmap) and os.path.isfile(hist) and os.path.isfile(n_mod)):
-                    M, H, N = get_matrices_from_paths([cmap, hist, n_mod])
-
-                    sum_all_cmap.append(M)
-                    sum_all_hist.append(H)
-                    sum_all_n_mod.append(N)
-    # print(hist, "\n", list(H[-1]), "\n", shape(array(H)))
-    print("Total number of days:  ", len(sum_all_cmap))
-    sum_all_cmap = sum(array(sum_all_cmap), axis=0)
-    sum_all_hist = sum(array(sum_all_hist), axis=0)
-    sum_all_n_mod = sum(array(sum_all_n_mod), axis=0)
-    # plot_save_imshow_3_maps([sum_all_cmap, sum_all_hist, sum_all_n_mod], ["|1-1/r|", "Histogram", "<n_mod>"],
-    #                         root_0, resolution="5")
-    # plot_save_imshow(sum_all_cmap, root_0, "|1-1/r|")
-    # print(sum_all_hist)
-    return sum_all_cmap, sum_all_hist, sum_all_n_mod
-
-
-def handle_raw_not_averaged_matrices(M, H, N):
-    ind_no_data = array(H < 1)
-    M[ind_no_data] = 0
-    N[ind_no_data] = 0.0
-
-    H[H < 1] = 0
-
-    # N[N<0]=0
-
-    # nan_to_num(H, nan=0.0)
-    # nan_to_num(M, nan=0.0)
-    # nan_to_num(N, nan=0.0)
-
-    M = divide(M, H)
-    # N = divide(N, H)
-    # N = nan_to_num(N, nan=0.0)
-    # M = nan_to_num(M, nan=0)
-    # M = absolute(M)
-    # M[absolute(M)>0.008] = nan
-
-    # M = clean_from_nans(M)
-    # M[M>0.005]=0
-    a = 1
-    b = a  # * 2
-    # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
-    M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
-
-    # M = M * -1
-    M[M < 0] = -1
-    M[M > 0] = 1
-
-    # M = nan_to_num(M, nan=0)
-    # H = log(H)
-    # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
-
-    plt.imshow(M)
-    plt.colorbar()
-
-    # plot_mollweid_simple(M[::-1].T)
-    # plt.title("<|1-r|/|n|>")
-    plt.show()
-
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_BA"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_AB"
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_BA"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_AB"
-#
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_AB"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_BA"
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
-
-
-all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
-              "november", "majus", "aprilis", "junius", "december2020"]
-months1 = ["julius", "szeptember", "augusztus", "november", "junius", "december2020"]
-months2 = ["majus", "februar", "marcius", "aprilis", "januar"]
-months3 = ["februar", "marcius"]
-
-m, h, n = create_averaged_plots_from_root(results_root, months3)
-handle_raw_not_averaged_matrices(m, h, n)
-
-
-def plot_the_three_raw_matrix_from_path(path):
-    csv_files = get_csv_file(path)
-    cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
-    M, H = get_matrices_from_paths([cmap, hist])
-    N = rotateAntiClockwise(nan_to_num(pd.read_csv(n_mod, na_filter=True).values[:, 1:], nan=0.0))
-    ind_no_data = array(H < 1)
-
-    M[ind_no_data] = nan
-    N[ind_no_data] = 0.0
-
-    H[H < 1] = 0
-
-    # # N[N<0]=0
-
-    # nan_to_num(H, nan=0.0)
-    # nan_to_num(M, nan=0.0)
-    # nan_to_num(N, nan=0.0)
-
-    M = divide(M, H)
-    # N = divide(N, H)
-    # N = nan_to_num(N, nan=0.0)
-    # M = nan_to_num(M, nan=0)
-    # M = absolute(M)
-    # M[absolute(M)>0.008] = nan
-
-    # M = clean_from_nans(M)
-    # M[M>0.005]=0
-    a = 1
-    b = a  # * 2
-    # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
-    M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
-
-    M[M == 0] = nan
-    M[M > 0] = 1
-    # M[M>0]=2
-    # H = log(H)
-    # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
-
-    plt.imshow(M)
-    plt.colorbar()
-    # plt.title("<|1-r|/|n|>")
-    plt.show()
-
-
-# M = rotate(M, -90)
-# plot_mollweid_simple(M)
-
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r"
-# plot_the_three_raw_matrix_from_path(results_root)
-
-# =================================================================================================================================================================
-# =================================================================================================================================================================
-# =================================================================================================================================================================
-
-
-# =====================================================================================
-from mpl_toolkits.mplot3d import Axes3D
-import numpy as np
-from matplotlib import cm
-
-
-def random_point(r=1):
-    ct = 2 * np.random.rand() - 1
-    st = np.sqrt(1 - ct ** 2)
-    phi = 2 * np.pi * np.random.rand()
-    x = r * st * np.cos(phi)
-    y = r * st * np.sin(phi)
-    z = r * ct
-    return np.array([x, y, z])
-
-
-def near(p, pntList, d0):
-    cnt = 0
-    for pj in pntList:
-        dist = np.linalg.norm(p - pj)
-        if dist < d0:
-            cnt += 1 - dist / d0
-    return cnt
-
-
-"""
-https://stackoverflow.com/questions/22128909/plotting-the-temperature-distribution-on-a-sphere-with-python
-"""
-
-
-def plot_on_sphere(WW):
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, projection='3d')
-    # WW = get_mean_matrix(root_dir)
-
-    u = np.linspace(0, 2 * np.pi, len(WW))
-    v = np.linspace(0, np.pi, len(WW[0]))
-
-    # create the sphere surface
-    XX = 10 * np.outer(np.cos(u), np.sin(v))
-    YY = 10 * np.outer(np.sin(u), np.sin(v))
-    ZZ = 10 * np.outer(np.ones(np.size(u)), np.cos(v))
-
-    WW = WW + abs(np.amin(WW))
-    myheatmap = WW / np.amax(WW)
-
-    # ~ ax.scatter( *zip( *pointList ), color='#dd00dd' )
-    ax.plot_surface(XX, YY, ZZ, cstride=1, rstride=1, facecolors=cm.jet(myheatmap))
-    # plt.colorbar(cm.jet( myheatmap ))
-    plt.show()
-
-
-def prepear_for_sphere(m, h):
-    ind_no_data = array(h < 1)
-    m[ind_no_data] = 0
-    h[h < 1] = 0
-    nan_to_num(h, nan=0.0)
-    nan_to_num(m, nan=0.0)
-    M = divide(m, h)
-    M = nan_to_num(M, nan=0)
-    a = 1
-    b = a  # * 2
-    M = calc_correct_average(h, M, (int(len(M) / b), int(len(M[0]) / a)))
-    M = nan_to_num(M, nan=0)
-    M[M < 0] = -1
-    M[M > 0] = 1
-    return M
-
-# M = prepear_for_sphere(m, h)
-
-
-# plot_on_sphere(M)
-
-# =====================================================================================
+find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)

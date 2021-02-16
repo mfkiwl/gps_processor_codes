@@ -1,16 +1,16 @@
+import re
+import time
+
 from numpy import *
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from itertools import chain
 import pymap3d as pm
 import os
 from vpython import rotate
 import pylab as pl
 import math
 from scipy.ndimage import rotate
-from scipy.linalg import norm as nrm
-import copy as cp
 
 s_o_l = 1.0  # 3.0*10**8
 
@@ -28,6 +28,28 @@ def getSTARS_for_galactic_system(path):
     nunki = pd.read_csv(path + '/Nunki_positions.csv', skiprows=0).values
     capella = pd.read_csv(path + '/Capella_positions.csv', skiprows=0).values
     return sun, galactic_n_p, galactic_center, nunki, capella, S, D
+
+
+def transform_matrix(f1, f2):  # transforms from f1 to f2
+    R = array([
+        [dot(f2[0], f1[0]), dot(f2[0], f1[1]), dot(f2[0], f1[2])],
+        [dot(f2[1], f1[0]), dot(f2[1], f1[1]), dot(f2[1], f1[2])],
+        [dot(f2[2], f1[0]), dot(f2[2], f1[1]), dot(f2[2], f1[2])]
+    ])
+    return R
+
+
+def cartesian_to_galactic(system, vector):
+    vector = unit(vector)
+    system = normvec(system)
+    ECEF = array(([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
+    R = transform_matrix(ECEF, system)
+    vector_in_system = around(R.dot(vector), decimals=3)
+    theta, phi = get_theta_phi(vector_in_system)
+    if not theta and not phi:
+        phi, theta, _ = pm.ecef2geodetic(vector_in_system[0], vector_in_system[1], vector_in_system[2])
+        phi = 90 - degrees(arccos(scal(ECEF[2], vector_in_system)))
+    return theta, phi
 
 
 def get_mean_direction_over_time(systems, directions):
@@ -57,27 +79,6 @@ def get_theta_phi(v):
     if 0.99 < v[2] and 1.01 > v[2] and -0.01 < v[1] and 0.01 > v[1] and -0.01 < v[0] and 0.01 > v[0]:
         return 0.0, 90.0
     return None, None
-
-
-def ecef_to_gcs(system, vector):
-    vector = unit(vector)
-    system = normvec(system)
-    ECEF = array(([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
-    R = transform_matrix(ECEF, system)
-    return around(R.dot(vector), decimals=3)
-
-
-def cartesian_to_galactic(system, vector):
-    vector = unit(vector)
-    system = normvec(system)
-    ECEF = array(([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
-    R = transform_matrix(ECEF, system)
-    vector_in_system = around(R.dot(vector), decimals=3)
-    theta, phi = get_theta_phi(vector_in_system)
-    if not theta and not phi:
-        phi, theta, _ = pm.ecef2geodetic(vector_in_system[0], vector_in_system[1], vector_in_system[2])
-        phi = 90 - degrees(arccos(scal(ECEF[2], vector_in_system)))
-    return theta, phi
 
 
 def cart2sph(x, y, z):
@@ -146,23 +147,22 @@ def process_raw_GCS_data(raw_results_GCS, resolution):
     for direction, value, mod_n in raw_results_GCS:
         i, j = get_ij_on_map(direction, resolution)
         cmap_v[i][j] += value
-        cmap_mod_n[i][j] += mod_n
+        # cmap_mod_n[i][j] += mod_n
         cmap_count[i][j] += 1
     cmap_count[cmap_count < 1] = 0
     return cmap_v, cmap_count, cmap_mod_n
 
 
 def get_ij_on_map(direction, resolution):
-    theta_max = math.pi
-    phi_max = math.pi / 2.0
-    rot_theta = arange(-theta_max, theta_max, resolution)
-    rot_phi = arange(-phi_max, phi_max, resolution)
-    # theta, phi = cartesian_to_spherical(direction)
+    # theta_max = math.pi
+    # phi_max = math.pi / 2.0
+    # rot_theta = arange(-theta_max, theta_max, resolution)
+    # rot_phi = arange(-phi_max, phi_max, resolution)
     theta, phi = cart2sph(direction[0], direction[1], direction[2])
     I_f = 0
     J_f = 0
-    l_theta = int(len(rot_theta) / 2.0)
-    l_phi = int(len(rot_phi) / 2.0)
+    l_theta = 36  # int(len(rot_theta) / 2.0)
+    l_phi = 18  # int(len(rot_phi) / 2.0)
     for i in range(-l_theta, l_theta):
         if i * resolution > theta:
             I_f = i + l_theta
@@ -286,47 +286,77 @@ def get_stars_in_GCS(star_dir, day_date):
     return star_directions_in_GCS
 
 
+def func_string(lista, i):
+    # lista[i] = list(map(float, list(lista[i].strip('[').strip(']').split())))
+    lista[i] = list(map(float, lista[i].strip('[').strip(']').split()))
+
+
 def get_raw_GCS_data(day_path, filename="GCS_Ndir_measure_Nmod_AB_and_BA.csv"):
     df = pd.read_csv(os.path.join(day_path, filename), index_col=0)
-    rows = [[i for i in row] for row in df.itertuples()]
-    rows = df.values.tolist()
+    rows = df.values
+    ndirection = rows[:, 0].tolist()
+    measure_nmod = rows[:, 1:].tolist()
+    list(map(lambda i: func_string(ndirection, i), range(0, len(ndirection))))
+    if len(ndirection) == len(measure_nmod):
+        for i in range(len(ndirection)):
+            # measure_nmod[i] = ndirection[i] + measure_nmod[i]
+            measure_nmod[i].insert(0, ndirection[i])
+        return array(measure_nmod, dtype=object)
+    return 0
 
 
-def process_one_day_rawGCS(day_path, resolution, fill_out=0.0):  # fill_out=0.0 in case when the "r * (r-1)^2" values are in the data matrix
+def operations_on_raw_data(data):
+    # data = pd.DataFrame(data)
+    # print(data)
+    # data[1] = data[1] * data[2]
+    # print(data)
+    l = int(len(data) / 2)
+    data = data[:l]
+    return data  # .values
+
+
+def process_one_day_rawGCS(day_path, resolution, fill_out=0.0):
     raw_results_GCS = get_raw_GCS_data(day_path)
-    print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
-    day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
-    day_data = nan_to_num(day_data, nan=fill_out)
-    day_cmap_n_mod = nan_to_num(day_cmap_n_mod, nan=fill_out)
-    day_count = nan_to_num(day_count, nan=fill_out)
-    return day_data, day_count, day_cmap_n_mod
+    raw_results_GCS = operations_on_raw_data(raw_results_GCS)
+    if type(raw_results_GCS) != int:
+        print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
+        day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
+        day_data = nan_to_num(day_data, nan=fill_out)
+        day_cmap_n_mod = nan_to_num(day_cmap_n_mod, nan=fill_out)
+        day_count = nan_to_num(day_count, nan=fill_out)
+        return day_data, day_count, day_cmap_n_mod
+    return 0, 0, 0
 
 
-def create_averaged_plots_from_root(root_0, months=None):
+def create_averaged_plots_from_root(root_0, star_dir, months=None):
+    execution_start = time.time()
     sum_all_cmap = []
     sum_all_hist = []
     sum_all_n_mod = []
     subfolders_with_paths_months = [f.path for f in os.scandir(root_0) if f.is_dir()]
-    star_directions_in_GCS = get_stars_in_GCS(star_dir, day_date="20200101")
+    # star_directions_in_GCS = get_stars_in_GCS(star_dir, day_date="20200101")
     for month_root in subfolders_with_paths_months:
         month_name = str(month_root).split("/")[-1]
         if months and month_name in months:
-
             days_with_paths = [f.path for f in os.scandir(month_root) if f.is_dir()]
             print("Month name: ", month_name, "  nr days: ", len(days_with_paths))
             for day_root in days_with_paths:
-
+                start = time.time()
                 M, H, N = process_one_day_rawGCS(day_root, resolution)
+                if type(M) != int:
+                    sum_all_cmap.append(M)
+                    pd.DataFrame(M).to_csv(
+                        os.path.join(day_root, "sum_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv'),
+                        index=True)
+                    sum_all_hist.append(H)
+                    sum_all_n_mod.append(N)
 
-                sum_all_cmap.append(M)
-                sum_all_hist.append(H)
-                sum_all_n_mod.append(N)
-
+                print('Elapsed time of the current day: ', time.time() - start, day_root.split("/")[-1])
     print("Total number of days:  ", len(sum_all_cmap))
     sum_all_cmap = sum(array(sum_all_cmap), axis=0)
     sum_all_hist = sum(array(sum_all_hist), axis=0)
     sum_all_n_mod = sum(array(sum_all_n_mod), axis=0)
-
+    print("\n Running time is {} minutes.\n".format((time.time() - execution_start) / 60.0))
     return sum_all_cmap, sum_all_hist, sum_all_n_mod
 
 
@@ -373,35 +403,30 @@ def handle_raw_not_averaged_matrices(M, H, N):
     plt.show()
 
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
-
-all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
-              "november", "majus", "aprilis", "junius", "december2020"]
-months1 = ["julius", "szeptember", "augusztus", "november", "junius", "december2020"]
-months2 = ["majus", "februar", "marcius", "aprilis", "januar"]
-
-m, h, n = create_averaged_plots_from_root(results_root, all_months)
-handle_raw_not_averaged_matrices(m, h, n)
-
-# =================================================================================================
-# =================================================================================================
-
-
 star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
 resolution = radians(5.0)
 
-# --------------------------------------------NZLD-PERTH--------------------------------------------
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_BA"
+all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
+              "november", "majus", "aprilis", "junius", "december2020"]
+months = ["januar"]
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
 
-# ======================================================================================================================
-# --------------------------------------------KOREA-Hong-Kong--------------------------------------------
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
 
-# --------------------------------------------PERTH-Hong-Kong--------------------------------------------
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_BA"
+result_roots = [
+    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized",
+    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized",
+    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized",
+    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"]
 
-# --------------------------------------------NZLD-Hong-Kong--------------------------------------------
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
+# m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
+# handle_raw_not_averaged_matrices(m, h, n)
+for result_root in result_roots:
+    m, h, n = create_averaged_plots_from_root(result_root, star_dir, all_months)
 
-
-find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+# =================================================================================================
+# =================================================================================================

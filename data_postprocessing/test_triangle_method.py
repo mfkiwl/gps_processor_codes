@@ -15,8 +15,6 @@ from scipy.linalg import norm as nrm
 import copy as cp
 
 s_o_l = 1.0  # 3.0*10**8
-satellite_positions = "all_sats_pos_time.csv"
-satellite_positions = "sats_pos_time_id.csv"
 
 
 def rotateAntiClockwise(array):
@@ -102,20 +100,6 @@ def parse_sats_data(sat_data_file):
     return data
 
 
-def parse_sats_data_alpha(sat_data_file):
-    data = {}
-    epoch = []
-    with open(sat_data_file) as in_file:
-        lineList = [line.rstrip('\n').split(",") for line in in_file]
-        for line in lineList[1:]:
-            if line[0][0] == "E":
-                data[line[-2]] = epoch
-                epoch = []
-                continue
-            epoch.append([float(line[0]), float(line[1]), float(line[2]), float(line[3]), line[4]])
-    return data
-
-
 def dr_lenght(v1, v2):
     return sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
 
@@ -132,20 +116,8 @@ def get_comon(vA, vB):
     return data
 
 
-def get_comon_alpha(vA, vB):
-    data = []
-    for a in vA:
-        # print(a)
-        for b in vB:
-            if a[4] == b[4]:
-                # print(dr_lenght(a[:3], b[:3]))
-                data.append([a, b])
-                break
-    return data
-
-
 def prepare_u_and_s_positions(path, get_u=True):
-    sat_data = parse_sats_data(os.path.join(path, satellite_positions))
+    sat_data = parse_sats_data(os.path.join(path, "all_sats_pos_time.csv"))
     if get_u:
         user_ = pd.read_csv(path + '/user_pos_allsatellites.csv', skiprows=1).values  # .transpose()
         user_mean = mean(user_, axis=0).astype('float64')
@@ -168,16 +140,6 @@ def extract_common_sats(satA, satB):
     return comon_parts
 
 
-# def calc_for_one_sattelite(posA, posB, sat_pr_both):
-#     S_A = sat_pr_both[0][:3]
-#     S_B = sat_pr_both[1][:3]
-#     t1 = sat_pr_both[0][3]  # / s_o_l
-#     t2 = sat_pr_both[1][3]  # / s_o_l
-#     AS = dr_lenght(S_A, posA)
-#     BS = dr_lenght(S_B, posB)
-#     return unit((array(posA) + array(posB)) / 2.0 - array(S_A)), get_proportion_v0(AS, t1, BS, t2)
-
-
 def calc_for_one_sattelite_beta(posA, posB, sat_pr_both):
     S_A = sat_pr_both[0][:3]
     S_B = sat_pr_both[1][:3]
@@ -192,20 +154,6 @@ def calc_for_one_sattelite_beta(posA, posB, sat_pr_both):
 
     mod_n = dr_lenght(array([0, 0, 0]), n)
     return unit(n), get_proportion_v3(AS, t1, BS, t2), mod_n
-
-
-def get_proportion_v0(AS, t1, BS, t2):
-    return (float(AS) * float(t2)) / (float(BS) * float(t1))
-
-
-def get_proportion_v1(AS, t1, BS, t2):
-    r = float(AS) * float(t2) / float(BS) / float(t1)
-    return r * (r - 1) ** 2
-
-
-def get_proportion_v2(AS, t1, BS, t2):
-    r = float(AS) * float(t2) / float(BS) / float(t1)
-    return abs(r - 1)
 
 
 def get_proportion_v3(AS, t1, BS, t2):
@@ -434,33 +382,6 @@ def plot_mollweid(matrix, star_directions, root_directory, name, resolution, ano
     pl.clf()
 
 
-def plot_save_imshow(matrix, root_directory, name, resolution="5", logplot=False):
-    child_dirname = os.path.split(root_directory)[-1] + "_" + name + '_24h' + "_" + resolution
-    plt.clf()
-    try:
-        cmap_save = pd.DataFrame(matrix)
-        cmap_save.to_csv(os.path.join(root_directory, child_dirname + '.csv'), index=True)
-        print('Matrix.csv saved: ', name, "   ", os.path.split(root_directory)[-1])
-    except:
-        pass
-    if logplot:
-        matrix = around(log(matrix + 1.0), decimals=0)
-
-    # matrix = sqrt(sqrt(matrix))
-    # a = 6
-    # b = a #* 2
-    # matrix = rebin(matrix, (int(len(matrix)/b), int(len(matrix[0])/a)))
-
-    plt.imshow(matrix)
-    plt.colorbar()
-
-    # plt.title("(r*(r-1)^2)^0.25")
-    # plt.show()
-    fig_name = os.path.join(root_directory, "imshow_" + child_dirname + '.png')
-    plt.savefig(fig_name, bbox_inches='tight')
-    plt.clf()
-
-
 def add_star_annotated(theta, phi, name, ax):
     theta = radians(theta)
     phi = radians(phi)
@@ -477,42 +398,6 @@ def add_star_annotated(theta, phi, name, ax):
 #                horizontalalignment='left',
 #                verticalalignment='top')
 
-
-def plot_save_imshow_3_maps(matrices, names, root_directory, resolution="5", logplot=False, show=False, fill_out=0.0):
-    matrices = array(matrices)
-    # plt.clf()
-    if logplot:
-        matrices[0] = around(log(matrices[0] + 1.0), decimals=0)
-
-    # matrices[1] = sqrt(matrices[1])
-    a = 4
-    b = a  # * 2
-    # matrices[1] = rebin(matrices[1], (int(len(matrices[1])/b), int(len(matrices[1][0])/a)))
-    fig, axis = plt.subplots(len(matrices), 1)
-    fig.subplots_adjust(left=0.02, bottom=0.1, right=0.95, top=0.94, wspace=0.8, hspace=0.5)
-
-    for matrix, name, ax in zip(matrices, names, axis):
-        nan_to_num(matrix, nan=fill_out)
-        sp = ax.imshow(matrix)
-        ax.set_title(name)
-        fig.colorbar(sp, ax=ax)
-
-    if not show:
-        print('Matrix.csv saved: ', os.path.split(root_directory)[-1])
-        figname = os.path.split(root_directory)[-1] + "_" + resolution
-        fig_name_with_path = os.path.join(root_directory, figname + '.png')
-        fig.savefig(fig_name_with_path, bbox_inches='tight')
-    else:
-        plt.show()
-    # plt.clf()
-
-
-def save_matrices(matrices, names, directory, resolution):
-    for matrix, name in zip(matrices, names):
-        cmap_save = pd.DataFrame(matrix)
-        cmap_save.to_csv(os.path.join(directory, name + "_not_averaged_" + str(int(degrees(resolution))) + '.csv'),
-                         index=True)
-        print('Matrix.csv saved!: ', name)
 
 
 def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positions=None, root=None,
@@ -737,63 +622,5 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
 
 star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
 resolution = radians(5.0)
-needed_files = ["user_pos_allsatellites.csv", satellite_positions]
+needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 
-# ======================================================================================================================
-
-# --------------------------------------------PERTH-Hong-Kong--------------------------------------------
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
-
-# --------------------------------------------NZLD-Hong-Kong-------------------------------------------- [*******]
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
-
-
-# --------------------------------------------PERTH-Del-korea-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
-
-# --------------------------------------------PERTH-India-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
-
-# --------------------------------------------NZLD-India-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
-
-
-# --------------------------------------------NZLD-Del-korea-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
-
-# --------------------------------------------NZLD-PERTH-symmetrized-------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
-
-# --------------------------------------------KOREA-Hong-Kong--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
-
-
-# # --------------------------------------------KOREA-India--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
-
-
-# --------------------------------------------Hong-Kong-India--------------------------------------------
-place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC_/r_inv_r_symmetrized"
-
-find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
