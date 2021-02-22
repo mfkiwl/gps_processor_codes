@@ -4,7 +4,7 @@ from numpy import *
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from itertools import chain
+from itertools import chain, islice
 import pymap3d as pm
 import os
 from vpython import rotate
@@ -15,6 +15,8 @@ from scipy.linalg import norm as nrm
 import copy as cp
 
 s_o_l = 1.0  # 3.0*10**8
+# satellite_positions = "all_sats_pos_time.csv"
+satellite_positions = "sats_pos_time_id.csv"
 
 
 def rotateAntiClockwise(array):
@@ -93,10 +95,10 @@ def parse_sats_data(sat_data_file):
         lineList = [line.rstrip('\n').split(",") for line in in_file]
         for line in lineList[1:]:
             if line[0][0] == "E":
-                data[line[-1]] = epoch
+                data[line[-2]] = epoch
                 epoch = []
                 continue
-            epoch.append([float(line[0]), float(line[1]), float(line[2]), float(line[3])])
+            epoch.append([float(line[0]), float(line[1]), float(line[2]), float(line[3]), line[4]])
     return data
 
 
@@ -109,7 +111,7 @@ def get_comon(vA, vB):
     for a in vA:
         # print(a)
         for b in vB:
-            if dr_lenght(a[:3], b[:3]) < 500:
+            if a[4] == b[4]:
                 # print(dr_lenght(a[:3], b[:3]))
                 data.append([a, b])
                 break
@@ -117,7 +119,7 @@ def get_comon(vA, vB):
 
 
 def prepare_u_and_s_positions(path, get_u=True):
-    sat_data = parse_sats_data(os.path.join(path, "all_sats_pos_time.csv"))
+    sat_data = parse_sats_data(os.path.join(path, satellite_positions))
     if get_u:
         user_ = pd.read_csv(path + '/user_pos_allsatellites.csv', skiprows=1).values  # .transpose()
         user_mean = mean(user_, axis=0).astype('float64')
@@ -140,11 +142,11 @@ def extract_common_sats(satA, satB):
     return comon_parts
 
 
-def calc_for_one_sattelite_beta(posA, posB, sat_pr_both):
+def calc_for_one_sattelite_satID(posA, posB, sat_pr_both):
     S_A = sat_pr_both[0][:3]
     S_B = sat_pr_both[1][:3]
-    t1 = sat_pr_both[0][3]  # / s_o_l
-    t2 = sat_pr_both[1][3]  # / s_o_l
+    t1 = sat_pr_both[0][3]
+    t2 = sat_pr_both[1][3]
     AS = dr_lenght(S_A, posA)
     BS = dr_lenght(S_B, posB)
 
@@ -153,7 +155,7 @@ def calc_for_one_sattelite_beta(posA, posB, sat_pr_both):
     n = A_SA_i - B_SB_j
 
     mod_n = dr_lenght(array([0, 0, 0]), n)
-    return unit(n), get_proportion_v3(AS, t1, BS, t2), mod_n
+    return {sat_pr_both[0][4]: [unit(n), get_proportion_v3(AS, t1, BS, t2), mod_n]}
 
 
 def get_proportion_v3(AS, t1, BS, t2):
@@ -166,8 +168,7 @@ def get_proportion_v3(AS, t1, BS, t2):
 def process_one_epoch(posA, posB, data_from_common_sats):
     dirrection_value = []
     for sats in data_from_common_sats:
-        # dirrection_value.append(calc_for_one_sattelite(posA, posB, sats))
-        dirrection_value.append(calc_for_one_sattelite_beta(posA, posB, sats))
+        dirrection_value.append(calc_for_one_sattelite_satID(posA, posB, sats))
     return dirrection_value
 
 
@@ -175,12 +176,13 @@ def process_one_epoch(posA, posB, data_from_common_sats):
 
 def process_all(posA, posB, common_data):
     raw_results = {}
+    # for k, v in islice(common_data.items(), 100):  # k = epoch index
     for k, v in common_data.items():  # k = epoch index
         raw_results[k] = process_one_epoch(posA, posB, v)
     return raw_results
 
 
-def raw_results_to_GCS(results_ECEF, GCS):
+def raw_results_to_GCS_satID(results_ECEF, GCS):
     results_GCS = []
     nr_groups = len(results_ECEF)
     nr_axis = len(GCS)
@@ -190,9 +192,11 @@ def raw_results_to_GCS(results_ECEF, GCS):
         results_group = results_ECEF[i]
         GCS_group = GCS[i]
         results_group_GCS = []
-        for direction, value, mod_n in results_group:
-            results_group_GCS.append([ecef_to_gcs(GCS_group, direction), value, mod_n])
-        results_GCS.append(results_group_GCS)
+        for line in results_group:
+            satID = list(line.keys())[0]
+            direction, value, mod_n = list(line.values())
+            # results_group_GCS.append([ecef_to_gcs(GCS_group, direction), value, mod_n])
+            results_GCS.append({satID: [ecef_to_gcs(GCS_group, direction), value, mod_n]})
     return results_GCS
 
 
@@ -285,14 +289,6 @@ def get_third_dir_by_cross_product(A, B):
     for i in range(l):
         C[i] = cross(A[i], B[i])
     return normvec(C)
-
-
-def get_raw_results(pathA, pathB):
-    posA, dataA = prepare_u_and_s_positions(pathA)
-    posB, dataB = prepare_u_and_s_positions(pathB)
-    comonAB = extract_common_sats(dataA, dataB)
-    raw_results = process_all(posA, posB, comonAB)
-    return raw_results
 
 
 def get_raw_results_using_mean_positions(pathA, pathB, mean_positions):
@@ -389,19 +385,47 @@ def add_star_annotated(theta, phi, name, ax):
     ax.scatter(theta, phi, marker='x', c='k', s=15)
 
 
-# ax.annotate(name,
-#            xy=array(theta, phi),
-#            xycoords='data')
+def filter_collected_triangles(all_data, sat_identifier=None):
+    sat_data = {}
+    for epoch, data in all_data.items():
+        for triange in data:
+            # if next(iter(triange)) == sat_identifier:
+            tr = triange.get(sat_identifier, None)
+            if tr:
+                sat_data[epoch] = tr[:1]
+                # print(tr[:1])
+    return sat_data
 
-#            arrowprops=
-#                dict(facecolor='black', shrink=0.05),
-#                horizontalalignment='left',
-#                verticalalignment='top')
+
+def filter_collected_triangles_many(all_data, sat_identifiers=None):
+    sat_data = {}
+    for epoch, data in all_data.items():
+        for triange in data:
+            if list(triange.keys())[0] in sat_identifiers:
+                sat_data[list(triange.keys())[0]][epoch] = list(triange.values())[0]
+                # print(tr[:1])
+    return sat_data
 
 
+def sat_data_to_spherical(sat_data):
+    for epoch, n in sat_data.items():
+        sat_data[epoch] = cart2sph(n[0][0], n[0][1], n[0][2])
+    return sat_data
 
-def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positions=None, root=None,
-                                fill_out=0.0):  # fill_out=0.0 in case when the "r * (r-1)^2" values are in the data matrix
+
+def plot_phi_theta_n(sat_data_spherical, sat_id=None, day=None):
+    directions = array(list(sat_data_spherical.values())).T
+    epochs = [float(i) for i in sat_data_spherical.keys()]
+    plt.scatter(epochs, directions[1], label="phi")
+    plt.scatter(epochs, directions[0], label="theta")
+    plt.legend()
+    if sat_id and day:
+        plt.title(day + " " + sat_id)
+    plt.show()
+
+
+def test_one_day_n_dirrections(pathA, pathB, star_dir, resolution, mean_positions=None, root=None, fill_out=0.0,
+                               day=None):
 
     Nx, Ny, Nz, S, D = get_global_stars(star_dir, os.path.dirname(pathB))
     l = len(Nx)
@@ -413,42 +437,21 @@ def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positio
     # =================================================================================================================
     GCS_all = [array([Nx[i], Ny[i], Nz[i]]) for i in range(l)]
 
-    # -------------------------------Symmetrize the calculated measure-------------------------------------------------
     raw_results_ECEF_AB = get_raw_results_using_mean_positions(pathA, pathB, mean_positions)
     groupped_raw_results_ECEF_AB = group_results(raw_results_ECEF_AB, l)
-    groupped_raw_results_GCS_AB = raw_results_to_GCS(groupped_raw_results_ECEF_AB, GCS_all)
-    raw_results_GCS_AB = list(chain(*groupped_raw_results_GCS_AB))  # [::10000]
+    groupped_raw_results_GCS_AB = raw_results_to_GCS_satID(groupped_raw_results_ECEF_AB, GCS_all)
+    sat_id = "R21"
+    # sat_ids = ["R21", "R22", "R23", "R09", "R08", "R07", "R01", "G02", "G05", "G13"]
+    # filter_collected_triangles_many(raw_results_ECEF_AB, sat_identifiers=sat_ids)
 
-    raw_results_ECEF_BA = get_raw_results_using_mean_positions(pathB, pathA, mean_positions[::-1])
-    groupped_raw_results_ECEF_BA = group_results(raw_results_ECEF_BA, l)
-    groupped_raw_results_GCS_BA = raw_results_to_GCS(groupped_raw_results_ECEF_BA, GCS_all)
-    raw_results_GCS_BA = list(chain(*groupped_raw_results_GCS_BA))  # [::10000]
+    # sat_data = filter_collected_triangles(raw_results_ECEF_AB, sat_identifier=sat_id)
+    # spherical_data = sat_data_to_spherical(sat_data)
+    # plot_phi_theta_n(spherical_data, sat_id, day)
     # -----------------------------------------------------------------------------------------------------------------
-    raw_results_GCS = raw_results_GCS_AB + raw_results_GCS_BA
 
-    print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
-    raw_n_v_nmod = pd.DataFrame(raw_results_GCS)
-    raw_n_v_nmod.to_csv(os.path.join(root, "GCS_Ndir_measure_Nmod_AB_and_BA.csv"), index=True)
-    del raw_n_v_nmod
+    # plot_mollweid(day_count, star_directions_in_GCS, root, "histogram", str(int(degrees(resolution))), anot=True)
 
-    day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
-
-    day_data = nan_to_num(day_data, nan=fill_out)
-    day_cmap_n_mod = nan_to_num(day_cmap_n_mod, nan=fill_out)
-    day_count = nan_to_num(day_count, nan=fill_out)
-
-    if root is None:
-        print("No day_result directory is given...process stops here!")
-        sys.exit()
-
-    save_matrices([day_data, day_count, day_cmap_n_mod], ["measure", "histogram", "n_mod"], root, resolution)
-    plot_mollweid(day_count, star_directions_in_GCS, root, "histogram", str(int(degrees(resolution))), anot=True)
-    plot_mollweid(divide(day_data, day_count), star_directions_in_GCS, root, "measure", str(int(degrees(resolution))),
-                  anot=True)
-    plot_mollweid(divide(day_cmap_n_mod, day_count), star_directions_in_GCS, root, "n_mod",
-                  str(int(degrees(resolution))), anot=True)
-    # plot_save_imshow(divide(day_cmap_n_mod, day_count), root, "n_mod")
-    return day_data, day_count, day_cmap_n_mod
+    return 0, 0, 0
 
 
 def is_all_data(path, needed_files, add_allsatellites=False):
@@ -504,7 +507,7 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
                     positions.append(mean_pos)
     positions = array(positions)
     std_pos = std(positions, axis=0)
-    print("Number of days with positions determined and std of the positions before filter: ", len(positions), std_pos)
+    print("Number of days with positions determined and std of the positions before filter:\n", len(positions), std_pos)
 
     std_pos_norm = sqrt(std_pos.dot(std_pos))
     mean_ = mean(positions, axis=0)
@@ -513,7 +516,7 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
     # print(not_outlier)
     no_outliers = positions[not_outlier]
     print("After filter: ", len(no_outliers), std(array(no_outliers), axis=0), "\n ")
-    print(mean(array(positions), axis=0), mean(array(no_outliers), axis=0))
+    # print(mean(array(positions), axis=0), mean(array(no_outliers), axis=0))
     return mean(array(no_outliers), axis=0)
 
 
@@ -547,29 +550,29 @@ def create_dir(root_path, dir_name):
 
 def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_dir, resolution):
     d = 0
-    all_hist = []
-    all_value = []
-    all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.5)  # NZLD eseten 0.2
+        # mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
+        # mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.5)  # NZLD eseten 0.2
+        mean_pos_A = [0.0, 0.0, 0.0]
+        mean_pos_B = [0.0, 0.0, 0.0]
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = True  # month_name in ["januar", "februar"]  # , "marcius", "aprilis", "majus", "junius", "november"]
+            condition = month_name in ["januar"]  # , "marcius", "aprilis", "majus", "junius", "november"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
                 print("Number of days: ", len(day_pairs))
-                for A_day, B_day in day_pairs:
+                for A_day, B_day in day_pairs[:1]:
                     start = time.time()
                     date = str(os.path.split(B_day)[-1])[-8:]
-                    if is_all_data(A_day, needed_files[1:], True) and is_all_data(B_day, needed_files[1:], True):
+                    cond2 = is_all_data(A_day, needed_files[1:], True) and is_all_data(B_day, needed_files[1:], True)
+                    if cond2:
                         result_month = create_dir(result_path, month_name)
                         result_day = create_dir(result_month, date)
                         print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ",
-                              os.path.split(B_day)[-1],
-                              "\n", "Index of the process: ", d, "\n")
+                              os.path.split(B_day)[-1], "\n")
+
                         A_day = os.path.join(A_day, "allsatellites")
                         B_day = os.path.join(B_day, "allsatellites")
 
@@ -582,36 +585,12 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
                             print("Actual position considered for: {}".format(str(B_day).split("/")[-2]))
                             posUB = get_mean_position(B_day, needed_files[0])
 
-                        # if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
-                        #     value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
-                        #                                                      root=result_day, fill_out=0.0)
-                        # else:
-                        #     # print("Mean positoin will be considered! ", str(B_day).split("/")[-1])
-                        value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
-                                                                         mean_positions=[posUA, posUB],
-                                                                         root=result_day, fill_out=0.0)
-                        all_hist.append(hist)
-                        all_value.append(value)
-                        all_n_mod.append(n_mod)
-                        d += 1
+                        value, hist, n_mod = test_one_day_n_dirrections(A_day, B_day, star_dir, resolution,
+                                                                        mean_positions=[posUA, posUB],
+                                                                        root=result_day, fill_out=0.0, day=date)
                     else:
                         print("\n Data not found for: ", date, "\n")
                     print('Elapsed time of the current day: ', time.time() - start, date)
-        all_hist = sum(array(all_hist), axis=0)
-        all_value = sum(array(all_value), axis=0)
-        all_n_mod = sum(array(all_n_mod), axis=0)
-        save_matrices([all_value, all_hist, all_n_mod], ["measure", "histogram", "n_mod"], result_path, resolution)
-
-        all_value_av = divide(all_value, all_hist)
-        all_n_mod_av = divide(all_n_mod, all_hist)
-
-        all_hist = rotateAntiClockwise(nan_to_num(all_hist, nan=0.0))
-        all_value_av = rotateAntiClockwise(nan_to_num(all_value_av, nan=0.0))
-        all_n_mod_av = rotateAntiClockwise(nan_to_num(all_n_mod_av, nan=0.0))
-
-        plot_save_imshow_3_maps([all_hist, all_value_av, all_n_mod_av], ["Histogram", "(|1-r|/|n|)^(1/4)", "<n_mod>"],
-                                result_path, resolution="5", logplot=False)
-    # plot_save_imshow(all_value_av, result_path, "(|1-r|/|n|)^(1/4)")
 
     print("Nr of days: ", d)
 
@@ -622,5 +601,19 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
 
 star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
 resolution = radians(5.0)
-needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
+needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
+# --------------------------------------------PERTH-Hong-Kong--------------------------------------------
+place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/pairs_by_identifier/HKKS_PERTH/r_inv_r_symmetrized"
+
+
+# --------------------------------------------Hong-Kong-India--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
+
+
+find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
