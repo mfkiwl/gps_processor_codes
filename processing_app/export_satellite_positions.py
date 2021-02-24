@@ -18,6 +18,37 @@ def get_file_name(file):
     return f.split("/")[-1]
 
 
+def calc_user_pos(measurements_in, dataset, resultspath):
+    print('Determine position: ', dataset)
+    # rinex_processed_grouped = measurements_in
+    times = []
+    ests = []
+    for corr in tqdm(measurements_in[:]):  # loop over the time/epochs
+        try:
+            fix, _ = raw.calc_pos_fix(corr)
+            ests.append(fix)
+            recv_timee = corr[0].recv_time
+            times.append(recv_timee.tow)
+        except:
+            pass
+
+    ests = np.array(ests)
+    times = np.array(times)
+
+    try:
+        times = pd.DataFrame(times)
+        times.to_csv(resultspath + '/times_' + dataset + '.csv', index=False)
+        user_positions = pd.DataFrame(ests[:, :3])
+        user_positions.to_csv(resultspath + '/user_pos_' + dataset + '.csv', index=False)
+
+        ests = np.mean(ests[:, :3], axis=0)
+        ests = pd.DataFrame(ests[:3].transpose())
+        ests.to_csv(resultspath + '/mean_user_pos_' + dataset + '.csv', index=False)
+
+    except:
+        pass
+
+
 def get_sats_pos_and_pr(rinex_processed_grouped, generalinfo_path):
     signal = 'C1C'
     all_sats_pos = []
@@ -64,23 +95,26 @@ def get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path):
     dat_from_else = 0
     sat_ident = []
     for corr in tqdm(rinex_processed_grouped):  # loop over the time/epochs
-        recv_timee = corr[0].recv_time.tow
-        flag = ['Epoch', 'index', i, recv_timee, '-']
-        all_sats_pos.append(flag)
-        for meas in corr:  # loop over the satellites
-            try:
-                prn = meas.prn
-                pr = meas.observables[signal]
-                pr += meas.sat_clock_err * constants.SPEED_OF_LIGHT
-                sat_pos = meas.sat_pos
-            except:
-                print('\n\n Satelite position cannot be defined \n\n')
-                continue
+        try:
+            recv_timee = corr[0].recv_time.tow
+            flag = ['Epoch', 'index', i, recv_timee, '-']
+            all_sats_pos.append(flag)
+            for meas in corr:  # loop over the satellites
+                try:
+                    prn = meas.prn
+                    pr = meas.observables[signal]
+                    pr += meas.sat_clock_err * constants.SPEED_OF_LIGHT
+                    sat_pos = meas.sat_pos
+                except:
+                    print('\n\n Satelite position cannot be defined \n\n')
+                    continue
 
-            # sat_ident.append(prn)
-            sat_data = np.array([sat_pos[0], sat_pos[1], sat_pos[2], pr, prn])
-            all_sats_pos.append(sat_data)
-        i = i + 1
+                # sat_ident.append(prn)
+                sat_data = np.array([sat_pos[0], sat_pos[1], sat_pos[2], pr, prn])
+                all_sats_pos.append(sat_data)
+            i = i + 1
+        except:
+            pass
     # print("If met {}, if did not meet: {}".format(dat_from_if, dat_from_else))
     # print("Satellite identifiers: ", list(set(sat_ident)))
     all_sats_pos = pd.DataFrame(np.array(all_sats_pos))
@@ -165,6 +199,7 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
             if not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
                 rinex_processed_grouped = get_processed_data(obs_file)
                 get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
+                # calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
                 total_processed += 1
             print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
 
@@ -174,8 +209,8 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
 # destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
 
 #                   PERTH
-obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/PERTH/rinex_obs/januar"
-destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/PERTH/rinex_obs/januar"
+# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
 
 #                   HKKS
 # obs_path = r"/Volumes/KingstonSSD/GPS/HKG/HKKS/obs_files/januar"
@@ -186,8 +221,8 @@ destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
 
 #                   IIGC
-# obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/januar"
-# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/majus"
+destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
 
 
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]

@@ -619,7 +619,7 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
                     positions.append(mean_pos)
     positions = array(positions)
     std_pos = std(positions, axis=0)
-    print("Number of days with positions determined and std of the positions before filter: ", len(positions), std_pos)
+    print("Number of days with positions determined and std of the positions before filter:\n", len(positions), std_pos)
 
     std_pos_norm = sqrt(std_pos.dot(std_pos))
     mean_ = mean(positions, axis=0)
@@ -628,7 +628,7 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
     # print(not_outlier)
     no_outliers = positions[not_outlier]
     print("After filter: ", len(no_outliers), std(array(no_outliers), axis=0), "\n ")
-    print(mean(array(positions), axis=0), mean(array(no_outliers), axis=0))
+    # print(mean(array(positions), axis=0), mean(array(no_outliers), axis=0))
     return mean(array(no_outliers), axis=0)
 
 
@@ -667,11 +667,11 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=0.5)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.2)  # NZLD eseten 0.2
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = True  # month_name in ["januar", "februar"]  # , "marcius", "aprilis", "majus", "junius", "november"]
+            condition = month_name in ["marcius", "aprilis", "majus"]  # , "marcius", "aprilis", "majus", "junius", "november"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
@@ -742,10 +742,10 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 # ======================================================================================================================
 
 # --------------------------------------------PERTH-Hong-Kong--------------------------------------------
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/pairs_by_identifier/HKKS_PERTH/r_inv_r_symmetrized"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/pairs_by_identifier/HKKS_PERTH/r_inv_r_symmetrized"
 
 
 # --------------------------------------------NZLD-Hong-Kong-------------------------------------------- [*******]
@@ -794,8 +794,8 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_meth
 
 
 # --------------------------------------------Hong-Kong-India--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
+place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)

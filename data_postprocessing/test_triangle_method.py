@@ -438,15 +438,15 @@ def test_one_day_n_dirrections(pathA, pathB, star_dir, resolution, mean_position
     GCS_all = [array([Nx[i], Ny[i], Nz[i]]) for i in range(l)]
 
     raw_results_ECEF_AB = get_raw_results_using_mean_positions(pathA, pathB, mean_positions)
-    groupped_raw_results_ECEF_AB = group_results(raw_results_ECEF_AB, l)
-    groupped_raw_results_GCS_AB = raw_results_to_GCS_satID(groupped_raw_results_ECEF_AB, GCS_all)
+    # groupped_raw_results_ECEF_AB = group_results(raw_results_ECEF_AB, l)
+    # groupped_raw_results_GCS_AB = raw_results_to_GCS_satID(groupped_raw_results_ECEF_AB, GCS_all)
     sat_id = "R21"
     # sat_ids = ["R21", "R22", "R23", "R09", "R08", "R07", "R01", "G02", "G05", "G13"]
     # filter_collected_triangles_many(raw_results_ECEF_AB, sat_identifiers=sat_ids)
 
-    # sat_data = filter_collected_triangles(raw_results_ECEF_AB, sat_identifier=sat_id)
-    # spherical_data = sat_data_to_spherical(sat_data)
-    # plot_phi_theta_n(spherical_data, sat_id, day)
+    sat_data = filter_collected_triangles(raw_results_ECEF_AB, sat_identifier=sat_id)
+    spherical_data = sat_data_to_spherical(sat_data)
+    plot_phi_theta_n(spherical_data, sat_id, day)
     # -----------------------------------------------------------------------------------------------------------------
 
     # plot_mollweid(day_count, star_directions_in_GCS, root, "histogram", str(int(degrees(resolution))), anot=True)

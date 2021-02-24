@@ -15,7 +15,7 @@ from scipy.linalg import norm as nrm
 import copy as cp
 
 s_o_l = 1.0  # 3.0*10**8
-satellite_positions = "all_sats_pos_time.csv"
+satellite_positions0 = "all_sats_pos_time.csv"
 satellite_positions = "sats_pos_time_id.csv"
 
 
@@ -88,7 +88,7 @@ def group_results(results_dict, l):
     return groupped
 
 
-def parse_sats_data(sat_data_file):
+def parse_sats_data_beta(sat_data_file):
     data = {}
     epoch = []
     with open(sat_data_file) as in_file:
@@ -114,6 +114,12 @@ def parse_sats_data_alpha(sat_data_file):
                 continue
             epoch.append([float(line[0]), float(line[1]), float(line[2]), float(line[3]), line[4]])
     return data
+
+
+def parse_sats_data(sat_data_file):
+    if "_id" in str(sat_data_file).split("/")[-1]:
+        return parse_sats_data_alpha(sat_data_file)
+    return parse_sats_data_beta(sat_data_file)
 
 
 def dr_lenght(v1, v2):
@@ -145,7 +151,10 @@ def get_comon_alpha(vA, vB):
 
 
 def prepare_u_and_s_positions(path, get_u=True):
-    sat_data = parse_sats_data(os.path.join(path, satellite_positions))
+    sat_data_file = os.path.join(path, satellite_positions)
+    if not os.path.isfile(sat_data_file):
+        sat_data_file = os.path.join(path, satellite_positions0)
+    sat_data = parse_sats_data(sat_data_file)
     if get_u:
         user_ = pd.read_csv(path + '/user_pos_allsatellites.csv', skiprows=1).values  # .transpose()
         user_mean = mean(user_, axis=0).astype('float64')
@@ -671,7 +680,7 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
         mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.5)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = True  # month_name in ["januar", "februar"]  # , "marcius", "aprilis", "majus", "junius", "november"]
+            condition = month_name in ["aprilis"]  # ["marcius", "aprilis", "majus", "junius", "november"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
@@ -679,7 +688,9 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
                 for A_day, B_day in day_pairs:
                     start = time.time()
                     date = str(os.path.split(B_day)[-1])[-8:]
-                    if is_all_data(A_day, needed_files[1:], True) and is_all_data(B_day, needed_files[1:], True):
+                    cond1 = is_all_data(A_day, needed_files[1:], True) or is_all_data(A_day, [satellite_positions0], True)
+                    cond2 = is_all_data(B_day, needed_files[1:], True) or is_all_data(B_day, [satellite_positions0], True)
+                    if cond1 and cond2:
                         result_month = create_dir(result_path, month_name)
                         result_day = create_dir(result_month, date)
                         print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ",
@@ -794,6 +805,6 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 # --------------------------------------------Hong-Kong-India--------------------------------------------
 place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
 place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC_/r_inv_r_symmetrized"
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
