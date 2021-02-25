@@ -28,11 +28,11 @@ def run_convbin(day_dir, output_dir):
 def run_converting(root_path, output_dir):
     source_folders = [os.path.join(root_path, f) for f in os.listdir(root_path) if
                       os.path.isdir(os.path.join(root_path, f))]
-    for folder in source_folders:
+    for folder in source_folders[:60]:
         run_convbin(folder, output_dir)
 
 
-input_ = r"C:\SzabolcsKelemen\PhD\GPS\NASA_extracted_collected"
-output = r"C:\SzabolcsKelemen\PhD\GPS\obs_files_NASA"
+input_ = r"D:\GPS\TIDV\raw_data\extracted_collected\2020"
+output = r"D:\GPS\TIDV\raw_data\obs_files"
 
 run_converting(input_, output)

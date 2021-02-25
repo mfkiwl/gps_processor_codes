@@ -14,7 +14,7 @@ def copy_from_dir_to_dir(src, dest):
 
 
 def copy_data_of_day(src_day, dest_day):
-    rinex_src = os.path.join(src_day, "20o")
+    rinex_src = os.path.join(src_day, "20d")
     # hod_dirs = [os.path.abspath(name) for name in os.listdir(rinex_src) if os.path.isdir(name)]
     hod_dirs = [f.name for f in os.scandir(rinex_src) if f.is_dir()]
     for hour in hod_dirs:
@@ -88,7 +88,7 @@ def extract_content(path):
     print(len(files))
     os.chdir(path)
     command = ".\extract_with_7z.sh"
-    command = "tar -xvzf *.gz"
+    # command = "tar -xvzf *.gz"
     os.system(command)
 
     # files = [f.path for f in os.scandir(path) if (f.is_file() and os.path.splitext(f.path)[1] != "20o")]
@@ -100,8 +100,8 @@ def extract_content(path):
     #     zip_ref.extractall(path)
     #     zip_ref.close()
 
-    # for file in files:
-    #     os.remove(file)
+    for file in files:
+        os.remove(file)
 
 
 def create_daydir_names():
@@ -122,22 +122,24 @@ def process_all_year(src_year, dest_year, prefix):
     # day_dirs = create_daydir_names()
     for day in day_dirs:
         try:
-            if int(day) > 335:
-                day_src_path = os.path.join(src_year, day)
-                # print(day_src_path)
-                dest_day = day_folder_name(2020, dest_year, day, prefix)
-                print(dest_day)
-                # copy_data_of_day(day_src_path, dest_day)
-                # copy_data_of_day_by_condition(day_src_path, dest_day, "ARTA", 100)
-                # download_from_ftp(day_src_path, dest_day, "ARTA")
-                extract_content(dest_day)
+            # if int(day) > 335:
+            day_src_path = os.path.join(src_year, day)
+            # print(day_src_path)
+            dest_day = day_folder_name(2020, dest_year, day, prefix)
+            print(dest_day)
+            copy_data_of_day(day_src_path, dest_day)
+            # copy_data_of_day_by_condition(day_src_path, dest_day, "ARTA", 100)
+            # download_from_ftp(day_src_path, dest_day, "ARTA")
+            extract_content(dest_day)
         except:
             pass
 
 
-src_year = r"C:\SzabolcsKelemen\PhD\GPS\NASA"
-dest_year = r"C:\SzabolcsKelemen\PhD\GPS\NASA_extracted_collected"
-prefix = "NASA"
+src_year = r"D:\GPS\TIDV\gdc.cddis.eosdis.nasa.gov\gnss\data\highrate\2020"
+dest_year = r"D:\GPS\TIDV\raw_data\extracted_collected\2020"
+# prefix = "NASA"
+prefix = "IIGC"
+prefix = "TIDV"
 
 # src_year = r"ftp://ftp.geonet.org.nz/rtgps/rinex1Hz/PositioNZ/2020"
 # dest_year = r"/Users/kelemensz/Qsync/GPS/reciever_data/NZLD"

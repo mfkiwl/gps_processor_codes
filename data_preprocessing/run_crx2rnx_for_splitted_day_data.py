@@ -29,11 +29,13 @@ def run_converting(root_path):
     binexes = [os.path.join(root_path, f) for f in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, f))]
     for folder in binexes:  # [:1]:
         print(folder)
-        day_data_dir = os.path.join(folder, "hkks/1s")
+        # day_data_dir = os.path.join(folder, "hkks/1s")
+        day_data_dir = folder
         run_CRX2RNX(day_data_dir)
 
 
-input_ = r"C:\SzabolcsKelemen\PhD\GPS\HKKS\downloaded"
+# input_ = r"C:\SzabolcsKelemen\PhD\GPS\HKKS\downloaded"
+input_ = r"D:\GPS\TIDV\raw_data\extracted_collected\2020"
 
 
 run_converting(input_)
