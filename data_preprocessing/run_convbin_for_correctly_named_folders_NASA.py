@@ -28,7 +28,7 @@ def run_convbin(day_dir, output_dir):
 def run_converting(root_path, output_dir):
     source_folders = [os.path.join(root_path, f) for f in os.listdir(root_path) if
                       os.path.isdir(os.path.join(root_path, f))]
-    for folder in source_folders[:60]:
+    for folder in source_folders[60:100]:
         run_convbin(folder, output_dir)
 
 
