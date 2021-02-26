@@ -110,8 +110,8 @@ def select_cmap_hist_n_mod(file_list):
     for file in file_list:
         if "histogram_not_averaged" in str(os.path.split(file)[-1]):
             hist = file
-        # if "measure_not_averaged" in str(os.path.split(file)[-1]) or "measure" in str(os.path.split(file)[-1]):
-        if "divNmod" in str(os.path.split(file)[-1]) or "sum_" in str(os.path.split(file)[-1]):
+        if "measure_not_averaged" in str(os.path.split(file)[-1]) or "measure" in str(os.path.split(file)[-1]):
+        # if "divNmod" in str(os.path.split(file)[-1]) or "sum_" in str(os.path.split(file)[-1]):
             cmap = file
         if "n_mod_not_averaged" in str(os.path.split(file)[-1]):
             n_mod = file
@@ -374,10 +374,11 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
 
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
 
 all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
               "november", "majus", "aprilis", "junius", "december2020"]

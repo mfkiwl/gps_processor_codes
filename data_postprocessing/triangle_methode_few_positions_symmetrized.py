@@ -613,7 +613,7 @@ def get_same_days_folders(root, needed_files):
     return None, None
 
 
-def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
+def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5, nofilter = False):
     positions = []
     month_folders = [f.path for f in os.scandir(root_path) if f.is_dir()]
     for month_root in month_folders:
@@ -622,6 +622,9 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5):
             day_root = os.path.join(day_root, "allsatellites")
             if is_all_data(day_root, [positions_file], add_allsatellites=False):
                 mean_pos = get_mean_position(day_root, positions_file)
+                if nofilter:
+                    print("Nofilter true: ", mean_pos)
+                    return mean_pos
                 # if str(os.path.split(day_root)[-2]).split("/")[-1][:4] in ['NZLD', 'NZDL']:
                 if str(os.path.split(day_root)[-2]).split("/")[-1][:4] not in ['BLUF', 'HOKI', 'MAVL', 'LKTA', 'MTJO']:
                     # print(str(os.path.split(day_root)[-2]).split("/")[-1], mean_pos)
@@ -676,11 +679,11 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.5)  # NZLD eseten 0.2
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=0.2)
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5, nofilter=True)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = month_name in ["aprilis"]  # ["marcius", "aprilis", "majus", "junius", "november"]
+            condition = month_name in ["marcius", "aprilis", "majus", "junius", "januar", "februar"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
@@ -803,8 +806,21 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
 
 # --------------------------------------------Hong-Kong-India--------------------------------------------
-place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
+
+
+# --------------------------------------------PERTH-TIDV-symmetrized-------------------------------------------
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
+
+
+# --------------------------------------------NZLD-TIDV-symmetrized-------------------------------------------
+place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
+place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
+
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)

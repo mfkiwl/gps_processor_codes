@@ -199,7 +199,7 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
             if not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
                 rinex_processed_grouped = get_processed_data(obs_file)
                 get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
-                # calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
+                calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
                 total_processed += 1
             print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
 
@@ -221,9 +221,12 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
 
 #                   IIGC
-obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/majus"
-destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/majus"
+# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
 
+#                   TIDV
+obs_path = r"/Volumes/KingstonSSD/GPS/TIDV/raw_data/obs_files/majus"
+destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
 
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
