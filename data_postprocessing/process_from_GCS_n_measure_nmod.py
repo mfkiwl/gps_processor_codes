@@ -423,10 +423,13 @@ result_roots = [
     r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized",
     r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"]
 
-# m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
-# handle_raw_not_averaged_matrices(m, h, n)
-for result_root in result_roots:
-    m, h, n = create_averaged_plots_from_root(result_root, star_dir, all_months)
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
+m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
+handle_raw_not_averaged_matrices(m, h, n)
+
+# for result_root in result_roots:
+#     m, h, n = create_averaged_plots_from_root(result_root, star_dir, all_months)
 
 # =================================================================================================
 # =================================================================================================

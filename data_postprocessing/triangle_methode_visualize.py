@@ -110,8 +110,9 @@ def select_cmap_hist_n_mod(file_list):
     for file in file_list:
         if "histogram_not_averaged" in str(os.path.split(file)[-1]):
             hist = file
-        if "measure_not_averaged" in str(os.path.split(file)[-1]) or "measure" in str(os.path.split(file)[-1]):
-        # if "divNmod" in str(os.path.split(file)[-1]) or "sum_" in str(os.path.split(file)[-1]):
+        if "measure_not_averaged" in str(os.path.split(file)[-1]):  # or "measure" in str(os.path.split(file)[-1]):
+        # if "divNmod" in str(os.path.split(file)[-1]) or "sum_measure_" in str(os.path.split(file)[-1]):
+
             cmap = file
         if "n_mod_not_averaged" in str(os.path.split(file)[-1]):
             n_mod = file
@@ -333,12 +334,12 @@ def handle_raw_not_averaged_matrices(M, H, N):
     b = a  # * 2
     # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
-
+    M[M == 0.0] = nan
     # M = M * -1
     M[M < 0] = -1
     M[M > 0] = 1
 
-    M = nan_to_num(M, nan=0)
+    # M = nan_to_num(M, nan=0)
     # H = log(H)
     # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
 
