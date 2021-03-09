@@ -668,10 +668,10 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
         mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5)  # NZLD eseten 0.2
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.2)  # NZLD eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = month_name in ["marcius", "aprilis", "majus"]  # , "marcius", "aprilis", "majus", "junius", "november"]
+            condition = month_name in ["marcius", "aprilis", "majus", "januar", "februar", "majus", "junius", "november"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
@@ -709,9 +709,10 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
                         all_value.append(value)
                         all_n_mod.append(n_mod)
                         d += 1
+                        print('Elapsed time of the current day: ', time.time() - start, date)
                     else:
                         print("\n Data not found for: ", date, "\n")
-                    print('Elapsed time of the current day: ', time.time() - start, date)
+
         all_hist = sum(array(all_hist), axis=0)
         all_value = sum(array(all_value), axis=0)
         all_n_mod = sum(array(all_n_mod), axis=0)
@@ -792,10 +793,16 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 # place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/pairs_by_identifier/NASA_IIGC/r_inv_r_symmetrized"
 
+# # --------------------------------------------Hong-Kong-India--------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
 
-# --------------------------------------------Hong-Kong-India--------------------------------------------
-place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
+
+# # --------------------------------------------PERTH CUTA-NZLD--------------------------------------------
+place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
+place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/CUTA_NZLD/r_inv_r_symmetrized"
+
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)

@@ -317,7 +317,7 @@ def operations_on_raw_data(data):
 
 def process_one_day_rawGCS(day_path, resolution, fill_out=0.0):
     raw_results_GCS = get_raw_GCS_data(day_path)
-    raw_results_GCS = operations_on_raw_data(raw_results_GCS)
+    # raw_results_GCS = operations_on_raw_data(raw_results_GCS)
     if type(raw_results_GCS) != int:
         print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
         day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
@@ -388,8 +388,8 @@ def handle_raw_not_averaged_matrices(M, H, N):
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
     # M = M * -1
-    # M[M < 0] = -1
-    # M[M>0] = 1
+    M[M < 0] = -1
+    M[M>0] = 1
 
     # M = nan_to_num(M, nan=0)
     # H = log(H)
@@ -424,7 +424,7 @@ result_roots = [
     r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"]
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
-results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
 m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
 handle_raw_not_averaged_matrices(m, h, n)
 

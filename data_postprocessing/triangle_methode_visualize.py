@@ -289,13 +289,16 @@ def create_averaged_plots_from_root(root_0, months=None):
             for day_root in days_with_paths:
                 csv_files = get_csv_file(day_root)
                 cmap, hist, n_mod = select_cmap_hist_n_mod(csv_files)
-                if (cmap and hist and n_mod) and (
-                        os.path.isfile(cmap) and os.path.isfile(hist) and os.path.isfile(n_mod)):
-                    M, H, N = get_matrices_from_paths([cmap, hist, n_mod])
+                try:
+                    if (cmap and hist and n_mod) and (
+                            os.path.isfile(cmap) and os.path.isfile(hist) and os.path.isfile(n_mod)):
+                        M, H, N = get_matrices_from_paths([cmap, hist, n_mod])
 
-                    sum_all_cmap.append(M)
-                    sum_all_hist.append(H)
-                    sum_all_n_mod.append(N)
+                        sum_all_cmap.append(M)
+                        sum_all_hist.append(H)
+                        sum_all_n_mod.append(N)
+                except:
+                    pass
     # print(hist, "\n", list(H[-1]), "\n", shape(array(H)))
     print("Total number of days:  ", len(sum_all_cmap))
     sum_all_cmap = sum(array(sum_all_cmap), axis=0)
@@ -347,7 +350,7 @@ def handle_raw_not_averaged_matrices(M, H, N):
     plt.colorbar()
 
     # plot_mollweid_simple(M[::-1].T)
-    # plt.title("<|1-r|/|n|>")
+    # plt.title("<r-1/r> symmetrized  (NZLD_TIDV)")
     plt.show()
 
 
@@ -365,21 +368,27 @@ def handle_raw_not_averaged_matrices(M, H, N):
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_AB"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_BA"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
+#??????
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
 
-results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/CUTA_NZLD/r_inv_r_symmetrized"
+
+
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
 
 all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
               "november", "majus", "aprilis", "junius", "december2020"]
