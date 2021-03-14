@@ -198,8 +198,8 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
             generalinfo_path = create_generalinfo_path(path_of_results)
             if True:  # not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
                 rinex_processed_grouped = get_processed_data(obs_file)
-                # get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
-                calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
+                get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
+                # calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
                 total_processed += 1
             print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
 
@@ -221,16 +221,16 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
 
 #                   IIGC
-# obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/majus"
+# obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/julius"
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
 
 #                   TIDV
-# obs_path = r"/Volumes/KingstonSSD/GPS/TIDV/raw_data/obs_files/majus"
-# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
+obs_path = r"/Users/kelemensz/Documents/Research/GPS/downloading_raw_data/TIDV/TIDV/raw_data/obs_files/junius"
+destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
 
 #                   PERTH_CUTA
-obs_path = r"/Volumes/KINGSTON/CUTA_obs/marcius"
-destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
+# obs_path = r"/Volumes/KINGSTON/CUTA_obs/marcius"
+# destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
 
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",

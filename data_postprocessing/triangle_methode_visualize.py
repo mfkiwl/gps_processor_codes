@@ -300,7 +300,8 @@ def create_averaged_plots_from_root(root_0, months=None):
                 except:
                     pass
     # print(hist, "\n", list(H[-1]), "\n", shape(array(H)))
-    print("Total number of days:  ", len(sum_all_cmap))
+    nr_days = len(sum_all_cmap)
+    print("Total number of days:  ", nr_days)
     sum_all_cmap = sum(array(sum_all_cmap), axis=0)
     sum_all_hist = sum(array(sum_all_hist), axis=0)
     sum_all_n_mod = sum(array(sum_all_n_mod), axis=0)
@@ -308,10 +309,10 @@ def create_averaged_plots_from_root(root_0, months=None):
     #                         root_0, resolution="5")
     # plot_save_imshow(sum_all_cmap, root_0, "|1-1/r|")
     # print(sum_all_hist)
-    return sum_all_cmap, sum_all_hist, sum_all_n_mod
+    return sum_all_cmap, sum_all_hist, sum_all_n_mod, nr_days
 
 
-def handle_raw_not_averaged_matrices(M, H, N):
+def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, round=True):
     ind_no_data = array(H < 1)
     M[ind_no_data] = 0.0
     N[ind_no_data] = 0.0
@@ -339,8 +340,9 @@ def handle_raw_not_averaged_matrices(M, H, N):
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
     M[M == 0.0] = nan
     # M = M * -1
-    M[M < 0] = -1
-    M[M > 0] = 1
+    if round:
+        M[M < 0] = -1
+        M[M > 0] = 1
 
     # M = nan_to_num(M, nan=0)
     # H = log(H)
@@ -350,30 +352,18 @@ def handle_raw_not_averaged_matrices(M, H, N):
     plt.colorbar()
 
     # plot_mollweid_simple(M[::-1].T)
-    # plt.title("<r-1/r> symmetrized  (NZLD_TIDV)")
-    plt.show()
+    plt.title("<r-1/r> symmetrized  ({}_{})".format(name, nr_days))
+    # plt.show()
+    fig_name1 = os.path.join(fig_directory, '{}_symmetrized.png'.format(name))
+    plt.savefig(fig_name1, bbox_inches='tight')
+    plt.clf()
 
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_BA"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_AB"
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
-
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_BA"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_AB"
-
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_AB"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_BA"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
 
-#??????
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_NASA/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
 
@@ -385,9 +375,18 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/CUTA_NZLD/r_inv_r_symmetrized"
 
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+#----
 
-results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
 
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
+
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_HKKS/r_inv_r_symmetrized"
+
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
+
+pair = "PERTH_TIDV"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
 
 all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
@@ -396,9 +395,12 @@ months1 = ["julius", "szeptember", "augusztus", "november", "junius", "december2
 months2 = ["majus", "februar", "marcius", "aprilis", "januar"]
 months3 = ["februar"]
 
+fig_dir = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/figures"
+m, h, n, n_days = create_averaged_plots_from_root(results_root, all_months)
 
-m, h, n = create_averaged_plots_from_root(results_root, all_months)
-handle_raw_not_averaged_matrices(m, h, n)
+
+handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair+"_int", days=n_days, round=True)
+handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, days=n_days, round=False)
 
 
 def call_separatelly(results_root, all_months):

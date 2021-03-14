@@ -613,7 +613,7 @@ def get_same_days_folders(root, needed_files):
     return None, None
 
 
-def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5, nofilter = False):
+def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5, nofilter=False):
     positions = []
     month_folders = [f.path for f in os.scandir(root_path) if f.is_dir()]
     for month_root in month_folders:
@@ -631,7 +631,7 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5, nofilt
                     positions.append(mean_pos)
     positions = array(positions)
     std_pos = std(positions, axis=0)
-    print("Number of days with positions determined and std of the positions before filter: ", len(positions), std_pos)
+    print("Before filter: ", len(positions), std_pos)
 
     std_pos_norm = sqrt(std_pos.dot(std_pos))
     mean_ = mean(positions, axis=0)
@@ -679,16 +679,17 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.2, nofilter=True)  # NZLD eseten 0.2
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=0.2)
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5)  # NZLD eseten 0.2
+
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
-            condition = month_name in ["marcius", "aprilis", "majus", "junius", "februar"]
+            condition = True  # month_name in ["marcius", "aprilis", "januar", "junius", "februar", "julius"]
             if condition:
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
                 print("Number of days: ", len(day_pairs))
-                for A_day, B_day in day_pairs[:5]:
+                for A_day, B_day in day_pairs:
                     start = time.time()
                     date = str(os.path.split(B_day)[-1])[-8:]
                     cond1 = is_all_data(A_day, needed_files[1:], True) or is_all_data(A_day, [satellite_positions0], True)
@@ -696,37 +697,43 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
                     if cond1 and cond2:
                         result_month = create_dir(result_path, month_name)
                         result_day = create_dir(result_month, date)
-                        print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ",
-                              os.path.split(B_day)[-1],
-                              "\n", "Index of the process: ", d, "\n")
-                        A_day = os.path.join(A_day, "allsatellites")
-                        B_day = os.path.join(B_day, "allsatellites")
+                        if len(os.listdir(result_day)) == 0:
+                            print(" Data will be processed from: ", os.path.split(A_day)[-1], "    ",
+                                  os.path.split(B_day)[-1],
+                                  "\n", "Index of the process: ", d, "\n")
+                            A_day = os.path.join(A_day, "allsatellites")
+                            B_day = os.path.join(B_day, "allsatellites")
 
-                        posUA = cp.deepcopy(mean_pos_A)
-                        posUB = cp.deepcopy(mean_pos_B)
-                        if is_all_data(A_day, needed_files[:1]):
-                            print("Actual position considered for: {}".format(str(A_day).split("/")[-2]))
-                            posUA = get_mean_position(A_day, needed_files[0])
-                        if is_all_data(B_day, needed_files[:1]):
-                            print("Actual position considered for: {}".format(str(B_day).split("/")[-2]))
-                            posUB = get_mean_position(B_day, needed_files[0])
+                            posUA = cp.deepcopy(mean_pos_A)
+                            posUB = cp.deepcopy(mean_pos_B)
+                            if is_all_data(A_day, needed_files[:1]):
+                                print("Actual position considered for: {}".format(str(A_day).split("/")[-2]))
+                                posUA = get_mean_position(A_day, needed_files[0])
+                            if is_all_data(B_day, needed_files[:1]):
+                                print("Actual position considered for: {}".format(str(B_day).split("/")[-2]))
+                                posUB = get_mean_position(B_day, needed_files[0])
 
-                        # if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
-                        #     value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
-                        #                                                      root=result_day, fill_out=0.0)
-                        # else:
-                        #     # print("Mean positoin will be considered! ", str(B_day).split("/")[-1])
-                        value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
-                                                                         mean_positions=[posUA, posUB],
-                                                                         root=result_day, fill_out=0.0)
-                        all_hist.append(hist)
-                        all_value.append(value)
-                        all_n_mod.append(n_mod)
-                        d += 1
-                        print('Elapsed time of the current day: ', time.time() - start, date)
+                            # if is_all_data(A_day, needed_files[:1]) and is_all_data(B_day, needed_files[:1]):
+                            #     value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
+                            #                                                      root=result_day, fill_out=0.0)
+                            # else:
+                            #     # print("Mean positoin will be considered! ", str(B_day).split("/")[-1])
+                            value, hist, n_mod = process_one_day_symmetrized(A_day, B_day, star_dir, resolution,
+                                                                             mean_positions=[posUA, posUB],
+                                                                             root=result_day, fill_out=0.0)
+                            all_hist.append(hist)
+                            all_value.append(value)
+                            all_n_mod.append(n_mod)
+                            d += 1
+                            print('Elapsed time of the current day: ', time.time() - start, date)
+                        else:
+                            # d += 1
+                            print("{} already processed!".format(date))
+
                     else:
                         print("\n Data not found for: ", date, "\n")
 
+        print("Total nr of days: ", d)
         all_hist = sum(array(all_hist), axis=0)
         all_value = sum(array(all_value), axis=0)
         all_n_mod = sum(array(all_n_mod), axis=0)
@@ -762,15 +769,15 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
 
 # --------------------------------------------NZLD-Hong-Kong-------------------------------------------- [*******]
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_HKKS/r_inv_r_AB"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
+# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_HKKS/r_inv_r_symmetrized"
 
 
 # --------------------------------------------PERTH-Del-korea-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
 
 # --------------------------------------------PERTH-India-symmetrized--------------------------------------------
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
@@ -784,9 +791,9 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
 
 # --------------------------------------------NZLD-Del-korea-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
+place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
+place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
 
 # --------------------------------------------NZLD-PERTH-symmetrized-------------------------------------------
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
@@ -794,10 +801,11 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
 
 # --------------------------------------------KOREA-Hong-Kong--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NASA"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
 # place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
 # # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
+# # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_NASA/r_inv_r_symmetrized"
 
 
 # # --------------------------------------------KOREA-India--------------------------------------------
@@ -831,9 +839,9 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
 
 # --------------------------------------------NASA-India------test--------------------------------------
-place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
 
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
