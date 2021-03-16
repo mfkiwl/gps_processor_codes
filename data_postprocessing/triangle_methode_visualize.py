@@ -378,15 +378,16 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
 #----
 
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
+results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_HKKS/r_inv_r_symmetrized"
 
-results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
 
-pair = "PERTH_TIDV"
+pair = results_root.split("/")[-2]
+print(pair)
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
 
 all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
@@ -399,8 +400,8 @@ fig_dir = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/figures"
 m, h, n, n_days = create_averaged_plots_from_root(results_root, all_months)
 
 
-handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair+"_int", days=n_days, round=True)
-handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, days=n_days, round=False)
+handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair+"_int", nr_days=n_days, round=True)
+handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, nr_days=n_days, round=False)
 
 
 def call_separatelly(results_root, all_months):
