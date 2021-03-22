@@ -221,12 +221,12 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
 
 #                   IIGC
-# obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/julius"
-# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/julius"
+destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
 
 #                   TIDV
-obs_path = r"/Users/kelemensz/Documents/Research/GPS/downloading_raw_data/TIDV/TIDV/raw_data/obs_files/junius"
-destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
+# obs_path = r"/Users/kelemensz/Documents/Research/GPS/downloading_raw_data/TIDV/TIDV/raw_data/obs_files/junius"
+# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
 
 #                   PERTH_CUTA
 # obs_path = r"/Volumes/KINGSTON/CUTA_obs/marcius"

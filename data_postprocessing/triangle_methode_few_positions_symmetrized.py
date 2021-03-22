@@ -679,8 +679,8 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     all_n_mod = []
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
-        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=0.5)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5)  # NZLD eseten 0.2
+        mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=0.2)
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5.0)  # NZLD es IIGC eseten 0.2
 
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
@@ -780,20 +780,21 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
 
 # --------------------------------------------PERTH-India-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+# place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_IIGC"
+# # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/PERTH_IIGC/r_inv_r_symmetrized"
 
 # --------------------------------------------NZLD-India-symmetrized--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
+# place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_IIGC"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/NZLD_IIGC/r_inv_r_symmetrized"
 
 
 # --------------------------------------------NZLD-Del-korea-symmetrized--------------------------------------------
-place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
-place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
 
 # --------------------------------------------NZLD-PERTH-symmetrized-------------------------------------------
 # place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
@@ -815,10 +816,10 @@ results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/proce
 
 
 # --------------------------------------------Hong-Kong-India--------------------------------------------
-# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
-# place_B = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/pairs_by_identifier/HKKS_IIGC/r_inv_r_symmetrized"
-
+# place_A = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS"
+# place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_IIGC"
+# # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/HKKS_IIGC/r_inv_r_symmetrized"
 
 # --------------------------------------------PERTH-TIDV-symmetrized-------------------------------------------
 # place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
@@ -843,10 +844,26 @@ results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/proce
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
 
 
-# --------------------------------------------NASA-India------test--------------------------------------
+# --------------------------------------------NASA-India--------------------------------------------
 # place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
+# place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_IIGC"
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+
+
+# # # --------------------------------------------PERTH CUTA-CUTB--------------------------------------------
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTA_CUTB/r_inv_r_symmetrized"
+
+# --------------------------------------------Hong-Kong-TIDV--------------------------------------------
+# place_A = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS"
+# place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/HKKS_TIDV/r_inv_r_symmetrized"
+
+# --------------------------------------------IIGC-TIDV--------------------------------------------
+place_A = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_IIGC"
+place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/IIGC_TIDV/r_inv_r_symmetrized"
 
 
 find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
