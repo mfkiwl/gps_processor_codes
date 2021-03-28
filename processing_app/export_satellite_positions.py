@@ -150,6 +150,16 @@ def get_obs_files(directory):
     return obs_files
 
 
+def get_obs_files_simple(directory):
+    obs_ext = ".obs"
+    obs_files = []
+    files = next(os.walk(directory))[2]
+    for file in files:
+        if os.path.splitext(file)[1] == obs_ext:
+            obs_files.append(os.path.abspath(os.path.join(directory, file)))
+    return obs_files
+
+
 def create_dir_for_results(obs_file, new_root_directory):
     obs_filename = get_file_name(obs_file)
     new_dir_name = obs_filename[:-2]
@@ -185,10 +195,18 @@ def is_all_data(path, needed_files, add_allsatellites=False):
     return False
 
 
+def create_dir(root_path, dir_name):
+    results_dir = os.path.join(root_path, dir_name)
+    if not os.path.isdir(results_dir):
+        os.makedirs(results_dir)
+    return results_dir
+
+
 def process_many_from_obs_root(obs_location, root_directory, needed_files, month_names):
     obs_files = get_obs_files(obs_location)
     month_name = os.path.split(obs_location)[-1]
-    root_directory = os.path.join(root_directory, month_name)
+    # root_directory = os.path.join(root_directory, month_name)
+    root_directory = create_dir(root_directory, month_name)
     total_processed = 0
     for obs_file in obs_files:  # [:1]:
         obs_file_name = os.path.splitext(os.path.split(obs_file)[-1])[0][:-2]
@@ -196,12 +214,34 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
             print("Obs filename: ", obs_file_name)
             path_of_results = create_dir_for_results(obs_file, root_directory)
             generalinfo_path = create_generalinfo_path(path_of_results)
-            if True:  # not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
+            if os.path.isdir(generalinfo_path) and not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
                 rinex_processed_grouped = get_processed_data(obs_file)
                 get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
-                # calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
+                calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
                 total_processed += 1
             print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
+
+
+def process_many_from_obs_root_simple(obs_location, root_directory, needed_files, month_names):
+    obs_files = get_obs_files_simple(obs_location)
+    month_name = os.path.split(obs_location)[-1]
+    # root_directory = os.path.join(root_directory, month_name)
+    root_directory = create_dir(root_directory, month_name)
+    total_processed = 0
+    # print(obs_files)
+    for obs_file in obs_files[:]:
+        obs_file_name = os.path.splitext(obs_file)[-2].split('/')[-1]
+        print("Obs filename: ", obs_file_name)
+        # path_of_results = create_dir_for_results(obs_file, root_directory)
+        path_of_results = create_dir(root_directory, obs_file_name)
+        generalinfo_path = create_generalinfo_path(path_of_results)
+        print(generalinfo_path)
+        if os.path.isdir(generalinfo_path) and not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
+            rinex_processed_grouped = get_processed_data(obs_file)
+            get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
+            calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
+            total_processed += 1
+        print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
 
 
 #                    NASA
@@ -221,12 +261,16 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
 
 #                   IIGC
-obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/julius"
-destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
+# obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/julius"
+# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_IIGC"
 
 #                   TIDV
-# obs_path = r"/Users/kelemensz/Documents/Research/GPS/downloading_raw_data/TIDV/TIDV/raw_data/obs_files/junius"
-# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_TIDV"
+# obs_path = r"/Volumes/BlueADATA S/GPS/raw_data/TIDV/raw_data/obs_files/"
+# destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
+
+#                   CUTB_rinex2_30sec
+obs_path = r"/Users/kelemensz/Documents/Research/GPS/downloading_raw_data/PERTH_rinex/CUTB_rinex2_OBS"
+destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/CUTB_30s_rinex2"
 
 #                   PERTH_CUTA
 # obs_path = r"/Volumes/KINGSTON/CUTA_obs/marcius"
@@ -236,4 +280,14 @@ needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
                "november", "majus", "aprilis", "junius", "december2020"]
 
-process_many_from_obs_root(obs_path, destination_path, needed_files, month_names)
+# set1 = month_names[6:]
+# for m in set1:
+#     obs_path_ = os.path.join(obs_path, m)
+#     if os.path.isdir(obs_path_):
+#         print(obs_path_)
+#         process_many_from_obs_root(obs_path_, destination_path, needed_files, month_names)
+
+
+# process_many_from_obs_root(obs_path, destination_path, needed_files, month_names)
+
+process_many_from_obs_root_simple(obs_path, destination_path, needed_files, month_names)
