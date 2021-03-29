@@ -372,7 +372,7 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/PERTH_IIGC/r_inv_r_symmetrized"
 
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/CUTA_NZLD/r_inv_r_symmetrized"
 
@@ -387,15 +387,19 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_HKKS/r_inv_r_symmetrized"
 
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/PERTH_TIDV/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/HKKS_TIDV/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/HKKS_TIDV/r_inv_r_symmetrized"
+
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_TIDV/r_inv_r_symmetrized"
+
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTB30s_NZLD/r_inv_r_symmetrized"
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTA_CUTB/r_inv_r_symmetrized"
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/PERTH_IIGC/r_inv_r_symmetrized"
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/IIGC_TIDV/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/IIGC_TIDV/r_inv_r_symmetrized"
 
 
 
@@ -409,7 +413,7 @@ months1 = ["julius", "szeptember", "augusztus", "november", "junius", "december2
 months2 = ["majus", "februar", "marcius", "aprilis", "januar"]
 months3 = ["februar"]
 
-fig_dir = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/figures"
+fig_dir = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/figures"
 m, h, n, n_days = create_averaged_plots_from_root(results_root, all_months)
 
 

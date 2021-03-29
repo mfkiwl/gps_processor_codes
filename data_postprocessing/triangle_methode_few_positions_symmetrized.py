@@ -126,11 +126,12 @@ def dr_lenght(v1, v2):
     return sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
 
 
-def get_comon(vA, vB):
+def get_comon_alpha(vA, vB):
     data = []
     for a in vA:
-        # print(a)
+        # print('---------', a)
         for b in vB:
+            # print('close: ', dr_lenght(a[:3], b[:3]))
             if dr_lenght(a[:3], b[:3]) < 500:
                 # print(dr_lenght(a[:3], b[:3]))
                 data.append([a, b])
@@ -138,13 +139,14 @@ def get_comon(vA, vB):
     return data
 
 
-def get_comon_alpha(vA, vB):
+def get_comon(vA, vB):
     data = []
     for a in vA:
-        # print(a)
+        # print('-------', a)
         for b in vB:
             if a[4] == b[4]:
-                # print(dr_lenght(a[:3], b[:3]))
+                print('-------', a[4], b[4])
+                print(dr_lenght(a[:3], b[:3]))
                 data.append([a, b])
                 break
     return data
@@ -172,6 +174,7 @@ def extract_common_sats(satA, satB):
     for kA, vA in satA.items():
         vB = satB.get(kA, None)
         if vB:
+            # print('Vb found: ', vB)
             comon = get_comon(vA, vB)
             comon_parts[kA] = comon
     return comon_parts
@@ -362,6 +365,7 @@ def get_raw_results_using_mean_positions(pathA, pathB, mean_positions):
     dataA = prepare_u_and_s_positions(pathA, False)
     dataB = prepare_u_and_s_positions(pathB, False)
     comonAB = extract_common_sats(dataA, dataB)
+    # print('-----: ', comonAB)
     raw_results = process_all(posA, posB, comonAB)  # dictionary, keys are the index of the epochs
     return raw_results
 
@@ -539,6 +543,7 @@ def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positio
 
     # -------------------------------Symmetrize the calculated measure-------------------------------------------------
     raw_results_ECEF_AB = get_raw_results_using_mean_positions(pathA, pathB, mean_positions)
+    # print('Raw results in ecef: ', len(raw_results_ECEF_AB))
     groupped_raw_results_ECEF_AB = group_results(raw_results_ECEF_AB, l)
     groupped_raw_results_GCS_AB = raw_results_to_GCS(groupped_raw_results_ECEF_AB, GCS_all)
     raw_results_GCS_AB = list(chain(*groupped_raw_results_GCS_AB))  # [::10000]
@@ -680,8 +685,8 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
         mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=5.0)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=5.0)  # NZLD es IIGC eseten 0.2
-
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.2)  # NZLD es IIGC eseten 0.2
+        # print('Common months:  ', month_pairs)
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
             condition = True  # month_name in ["marcius", "aprilis", "januar", "junius", "februar", "julius"]
@@ -689,9 +694,10 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
                 print(month_name)
                 day_pairs = find_corresponding_dirs_in_different_roots(A_month, B_month)
                 print("Number of days: ", len(day_pairs))
-                for A_day, B_day in day_pairs:
+                for A_day, B_day in day_pairs[:]:
                     start = time.time()
                     date = str(os.path.split(B_day)[-1])[-8:]
+                    print('Date: ', date)
                     cond1 = is_all_data(A_day, needed_files[1:], True) or is_all_data(A_day, [satellite_positions0], True)
                     cond2 = is_all_data(B_day, needed_files[1:], True) or is_all_data(B_day, [satellite_positions0], True)
                     if cond1 and cond2:
@@ -826,10 +832,22 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 # place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
 # results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
 
+
+# # --------------------------------------------CUTB30s_rinexbol-NZLD-symmetrized-------------------------------------------
+place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/CUTB2020_30s_rinex2"
+place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTB30s_NZLD/tests"
+
+# # --------------------------------------------CUTB30s_rinexbol-CUTB-symmetrized-------------------------------------------
+# place_A = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/CUTB2020_30s_rinex2"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTB30s_CUTB/r_inv_r_symmetrized"
+
+
 # # --------------------------------------------NASA-TIDV-symmetrized-------------------------------------------
-place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
-results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_TIDV/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+# place_B = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_TIDV/r_inv_r_symmetrized"
 
 # # # --------------------------------------------PERTH CUTA-NZLD--------------------------------------------
 # place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"

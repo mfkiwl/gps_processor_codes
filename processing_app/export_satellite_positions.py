@@ -239,7 +239,7 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
         if os.path.isdir(generalinfo_path) and not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
             rinex_processed_grouped = get_processed_data(obs_file)
             get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
-            calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
+            # calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
             total_processed += 1
         print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
 
@@ -257,8 +257,8 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
 
 #                   NZLD
-# obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/NZ/obs_files/ARTA_smaller_obs/januar"
-# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_NZLD"
+obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/NZ/obs_files/ARTA_smaller_obs/januar"
+destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
 
 #                   IIGC
 # obs_path = r"/Volumes/KingstonSSD/GPS/INDIA/IIGC/obs_files_IIGC/julius"
@@ -269,8 +269,8 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
 # destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
 
 #                   CUTB_rinex2_30sec
-obs_path = r"/Users/kelemensz/Documents/Research/GPS/downloading_raw_data/PERTH_rinex/CUTB_rinex2_OBS"
-destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/CUTB_30s_rinex2"
+# obs_path = r"/Users/kelemensz/Documents/Research/GPS/downloading_raw_data/PERTH_rinex/CUTB_rinex2_OBS"
+# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/CUTB_30s_rinex2"
 
 #                   PERTH_CUTA
 # obs_path = r"/Volumes/KINGSTON/CUTA_obs/marcius"
