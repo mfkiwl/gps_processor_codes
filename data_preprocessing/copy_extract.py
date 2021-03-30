@@ -135,11 +135,14 @@ def process_all_year(src_year, dest_year, prefix):
             pass
 
 
-src_year = r"D:\GPS\TIDV\gdc.cddis.eosdis.nasa.gov\gnss\data\highrate\2020"
-dest_year = r"D:\GPS\TIDV\raw_data\extracted_collected\2020"
+# src_year = r"D:\GPS\raw_data\TIDV\gdc.cddis.eosdis.nasa.gov\gnss\data\highrate\2020"
+# dest_year = r"D:\GPS\raw_data\TIDV\raw_data\extracted_collected\2020"
+
+src_year = r"D:\GPS\raw_data\IISC\gdc.cddis.eosdis.nasa.gov\gnss\data\highrate\2020"
+dest_year = r"D:\GPS\raw_data\IISC\extracted_collected\2020"
 # prefix = "NASA"
 prefix = "IIGC"
-prefix = "TIDV"
+# prefix = "TIDV"
 
 # src_year = r"ftp://ftp.geonet.org.nz/rtgps/rinex1Hz/PositioNZ/2020"
 # dest_year = r"/Users/kelemensz/Qsync/GPS/reciever_data/NZLD"
