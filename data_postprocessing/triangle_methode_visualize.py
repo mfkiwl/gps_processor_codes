@@ -367,8 +367,7 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
 
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/HKKS_IIGC/r_inv_r_symmetrized"
+results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/PERTH_IIGC/r_inv_r_symmetrized"
 
@@ -376,14 +375,11 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/CUTA_NZLD/r_inv_r_symmetrized"
 
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/NASA_IIGC/r_inv_r_symmetrized"
-#----
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_NASA/r_inv_r_symmetrized"
 
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/NZLD_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_HKKS/r_inv_r_symmetrized"
 
@@ -393,13 +389,13 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 
 # results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_TIDV/r_inv_r_symmetrized"
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTB30s_NZLD/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTB30s_NZLD/r_inv_r_symmetrized"
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTA_CUTB/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/PERTH_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/IIGC_TIDV/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/IIGC_TIDV/r_inv_r_symmetrized"
 
 
 
