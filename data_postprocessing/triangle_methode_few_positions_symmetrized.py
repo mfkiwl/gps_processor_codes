@@ -175,6 +175,7 @@ def get_positions_std(path, filename, std_limit=30.0):
     if os.path.isfile(file):
         user_ = pd.read_csv(file, skiprows=1).values  # .transpose()
         std_pos = mean(std(user_, axis=0))
+        print("                             STD: ", std_pos)
         if std_pos > std_limit:
             return True
         return False
@@ -182,8 +183,8 @@ def get_positions_std(path, filename, std_limit=30.0):
 
 
 def is_reliable(A_day, B_day, needed_file):
-    stdUA = get_positions_std(A_day, needed_files)
-    stdUB = get_positions_std(B_day, needed_files)
+    stdUA = get_positions_std(A_day, needed_file)
+    stdUB = get_positions_std(B_day, needed_file)
     if stdUA or stdUB:
         return False
     return True
@@ -798,8 +799,8 @@ def find_and_delete_wrong_data(path_A, path_B, result_path, needed_files, star_d
                     cond1 = is_all_data(A_day, needed_files[1:], True) or is_all_data(A_day, [satellite_positions0], True)
                     cond2 = is_all_data(B_day, needed_files[1:], True) or is_all_data(B_day, [satellite_positions0], True)
                     if cond1 and cond2:
-                        if is_reliable(A_day, B_day, needed_files[0]):
-                            print('Nor reliable: ', date)
+                        if not is_reliable(A_day, B_day, needed_files[0]):
+                            print('Not reliable: ', date)
                         # result_month = create_dir(result_path, month_name)
                         # result_day = create_dir(result_month, date)
                     else:
@@ -913,15 +914,15 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
 
 # --------------------------------------------NASA-India--------------------------------------------
-# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
-# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
+results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
 
 
 # # # --------------------------------------------PERTH CUTA-CUTB--------------------------------------------
-place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
-place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
-results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/CUTA_CUTB/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/CUTA_CUTB/r_inv_r_symmetrized"
 
 # --------------------------------------------Hong-Kong-TIDV--------------------------------------------
 # place_A = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS"
@@ -934,4 +935,5 @@ results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/proce
 # results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/IIGC_TIDV/r_inv_r_symmetrized"
 
 
-find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+find_and_delete_wrong_data(place_A, place_B, results_root, needed_files, star_dir, resolution)
