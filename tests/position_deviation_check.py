@@ -34,4 +34,4 @@ HKKS = r'/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS/ja
 TIDV = r'/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV/aprilis'
 
 
-calc_for_all_month(CUTA)
+calc_for_all_month(IISC)

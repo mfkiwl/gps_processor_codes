@@ -110,8 +110,9 @@ def select_cmap_hist_n_mod(file_list):
     for file in file_list:
         if "histogram_not_averaged" in str(os.path.split(file)[-1]):
             hist = file
-        if "measure_not_averaged" in str(os.path.split(file)[-1]):  # or "measure" in str(os.path.split(file)[-1]):
-        # if "divNmod" in str(os.path.split(file)[-1]) or "sum_measure_" in str(os.path.split(file)[-1]):
+        # if "measure_not_averaged" in str(os.path.split(file)[-1]):  # or "measure" in str(os.path.split(file)[-1]):
+        # if "divNmod" in str(os.path.split(file)[-1]) or "asimm_measure_r_inv_r_" in str(os.path.split(file)[-1]):
+        if "asimm_measure_r_inv_r_" in str(os.path.split(file)[-1]):
 
             cmap = file
         if "n_mod_not_averaged" in str(os.path.split(file)[-1]):
@@ -352,9 +353,11 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
     plt.colorbar()
 
     # plot_mollweid_simple(M[::-1].T)
-    plt.title("<r-1/r> symmetrized  ({}_{})".format(name, nr_days))
+    # plt.title("<r-1/r> symmetrized  ({}_{})".format(name, nr_days))
+    plt.title("<r-1/r> - ({}_{})".format(name, nr_days))
     # plt.show()
     fig_name1 = os.path.join(fig_directory, '{}_symmetrized.png'.format(name))
+    # fig_name1 = os.path.join(fig_directory, '{}_not_symmetrized.png'.format(name))
     plt.savefig(fig_name1, bbox_inches='tight')
     plt.clf()
 
@@ -367,7 +370,7 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/HKKS_PERTH/r_inv_r_symmetrized"
 
-results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/PERTH_IIGC/r_inv_r_symmetrized"
 
@@ -391,7 +394,7 @@ results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/proce
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTB30s_NZLD/r_inv_r_symmetrized"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method/CUTA_CUTB/r_inv_r_symmetrized"
+results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/CUTA_CUTB/r_inv_r_symmetrized"
 
 # results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
 
@@ -416,6 +419,32 @@ m, h, n, n_days = create_averaged_plots_from_root(results_root, all_months)
 handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair+"_int", nr_days=n_days, round=True)
 handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, nr_days=n_days, round=False)
 
+result_roots = [
+    r"CUTA_CUTB/r_inv_r_symmetrized", r"PERTH_NZLD/r_inv_r_symmetrized", r"PERTH_NASA/r_inv_r_symmetrized",
+    r"HKKS_PERTH/r_inv_r_symmetrized", r"HKKS_IIGC/r_inv_r_symmetrized", r"PERTH_IIGC/r_inv_r_symmetrized",
+    r"NZLD_TIDV/r_inv_r_symmetrized", r"CUTA_NZLD/r_inv_r_symmetrized", r"NASA_IIGC/r_inv_r_symmetrized",
+    r"NZLD_NASA/r_inv_r_symmetrized", r"NZLD_IIGC/r_inv_r_symmetrized", r"NZLD_HKKS/r_inv_r_symmetrized",
+    r"PERTH_TIDV/r_inv_r_symmetrized", r"HKKS_TIDV/r_inv_r_symmetrized", r"NASA_TIDV/r_inv_r_symmetrized",
+    r"CUTB30s_NZLD/r_inv_r_symmetrized", r"PERTH_IIGC/r_inv_r_symmetrized", r"HKKS_NASA/r_inv_r_symmetrized",
+    r"IIGC_TIDV/r_inv_r_symmetrized"]
+
+
+main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data"
+
+# for result_root in result_roots[:]:
+#     root = os.path.join(main_root, result_root)
+#     if not os.path.isdir(root):
+#         print(root)
+#         continue
+#     print(root, '\n', '\n')
+#     pair = result_root.split("/")[-2]
+#     print(pair)
+#     m, h, n, n_days = create_averaged_plots_from_root(root, all_months)
+#     try:
+#         handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair + "_int", nr_days=n_days, round=True)
+#         handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, nr_days=n_days, round=False)
+#     except:
+#         pass
 
 def call_separatelly(results_root, all_months):
     for month in all_months:

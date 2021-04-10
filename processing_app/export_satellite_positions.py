@@ -214,10 +214,10 @@ def process_many_from_obs_root(obs_location, root_directory, needed_files, month
             print("Obs filename: ", obs_file_name)
             path_of_results = create_dir_for_results(obs_file, root_directory)
             generalinfo_path = create_generalinfo_path(path_of_results)
-            if os.path.isdir(generalinfo_path) and not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
+            if os.path.isdir(generalinfo_path) and not is_all_data(generalinfo_path, needed_files[:1]):
                 rinex_processed_grouped = get_processed_data(obs_file)
-                get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
-                # calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
+                # get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
+                calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
                 total_processed += 1
             print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
 
@@ -238,15 +238,15 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
         print(generalinfo_path)
         if os.path.isdir(generalinfo_path) and not is_all_data(generalinfo_path, ["sats_pos_time_id.csv"]):
             rinex_processed_grouped = get_processed_data(obs_file)
-            get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
-            # calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
+            # get_sats_pos_and_pr_beta(rinex_processed_grouped, generalinfo_path)
+            calc_user_pos(rinex_processed_grouped, 'allsatellites', generalinfo_path)
             total_processed += 1
         print("\n                          Processed: {}/{} \n".format(total_processed, len(obs_files)))
 
 
 #                    NASA
-# obs_path = r"/Volumes/KingstonSSD/GPS/NASA/obs_files/januar"
-# destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+obs_path = r"/Volumes/KingstonSSD/GPS/NASA/obs_files"
+destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
 
 #                   PERTH
 # obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/PERTH/rinex_obs/januar"
@@ -257,7 +257,7 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
 
 #                   NZLD
-# obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/NZ/obs_files/ARTA_smaller_obs/januar"
+# obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/NZ/obs_files/ARTA_smaller_obs"
 # destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NZLD"
 
 #                   IIGC
@@ -265,7 +265,7 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
 # destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
 
 #                   TIDV
-# obs_path = r"/Volumes/BlueADATA S/GPS/raw_data/TIDV/raw_data/obs_files/"
+# obs_path = r"/Volumes/KingstonSSD/GPS/TIDV/raw_data/obs_files"
 # destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_TIDV"
 
 #                   CUTB_rinex2_30sec
@@ -273,22 +273,22 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/CUTB_30s_rinex2"
 
 #                   PERTH_CUTA
-# obs_path = r"/Volumes/KINGSTON/CUTA_obs/marcius"
-obs_path = r"/Volumes/BlueADATA S/GPS/raw_data/PERTH/CUTA_obs/februar"
-destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
+# # obs_path = r"/Volumes/KINGSTON/CUTA_obs/marcius"
+# obs_path = r"/Volumes/BlueADATA S/GPS/raw_data/PERTH/CUTA_obs/marcius"
+# destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
 
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
                "november", "majus", "aprilis", "junius", "december2020"]
 
-# set1 = month_names[:8]
-# for m in set1:
-#     obs_path_ = os.path.join(obs_path, m)
-#     if os.path.isdir(obs_path_):
-#         print(obs_path_)
-#         process_many_from_obs_root(obs_path_, destination_path, needed_files, month_names)
+set1 = month_names[:6]
+for m in set1:
+    obs_path_ = os.path.join(obs_path, m)
+    if os.path.isdir(obs_path_):
+        print(obs_path_)
+        process_many_from_obs_root(obs_path_, destination_path, needed_files, month_names)
 
 
-process_many_from_obs_root(obs_path, destination_path, needed_files, month_names)
+# process_many_from_obs_root(obs_path, destination_path, needed_files, month_names)
 
 # process_many_from_obs_root_simple(obs_path, destination_path, needed_files, month_names)

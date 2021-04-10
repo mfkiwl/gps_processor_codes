@@ -292,7 +292,10 @@ def func_string(lista, i):
 
 
 def get_raw_GCS_data(day_path, filename="GCS_Ndir_measure_Nmod_AB_and_BA.csv"):
-    df = pd.read_csv(os.path.join(day_path, filename), index_col=0)
+    try:
+        df = pd.read_csv(os.path.join(day_path, filename), index_col=0)
+    except:
+        return 0
     rows = df.values
     ndirection = rows[:, 0].tolist()
     measure_nmod = rows[:, 1:].tolist()
@@ -312,13 +315,13 @@ def operations_on_raw_data(data):
     # print(data)
     l = int(len(data) / 2)
     data = data[:l]
-    return data  # .values
+    return data
 
 
 def process_one_day_rawGCS(day_path, resolution, fill_out=0.0):
     raw_results_GCS = get_raw_GCS_data(day_path)
-    # raw_results_GCS = operations_on_raw_data(raw_results_GCS)
     if type(raw_results_GCS) != int:
+        raw_results_GCS = operations_on_raw_data(raw_results_GCS)
         print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
         day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
         day_data = nan_to_num(day_data, nan=fill_out)
@@ -341,15 +344,16 @@ def create_averaged_plots_from_root(root_0, star_dir, months=None):
             days_with_paths = [f.path for f in os.scandir(month_root) if f.is_dir()]
             print("Month name: ", month_name, "  nr days: ", len(days_with_paths))
             for day_root in days_with_paths:
+                # not_simmetrized_resultfile = os.path.join(day_root, "sum_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
+                not_simmetrized_resultfile = os.path.join(day_root, "asimm_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
                 start = time.time()
-                M, H, N = process_one_day_rawGCS(day_root, resolution)
-                if type(M) != int:
-                    sum_all_cmap.append(M)
-                    pd.DataFrame(M).to_csv(
-                        os.path.join(day_root, "sum_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv'),
-                        index=True)
-                    sum_all_hist.append(H)
-                    sum_all_n_mod.append(N)
+                if True:  # not os.path.isfile(not_simmetrized_resultfile):
+                    M, H, N = process_one_day_rawGCS(day_root, resolution)
+                    if type(M) != int:
+                        sum_all_cmap.append(M)
+                        pd.DataFrame(M).to_csv(not_simmetrized_resultfile, index=True)
+                        sum_all_hist.append(H)
+                        sum_all_n_mod.append(N)
 
                 print('Elapsed time of the current day: ', time.time() - start, day_root.split("/")[-1])
     print("Total number of days:  ", len(sum_all_cmap))
@@ -389,7 +393,7 @@ def handle_raw_not_averaged_matrices(M, H, N):
 
     # M = M * -1
     M[M < 0] = -1
-    M[M>0] = 1
+    M[M > 0] = 1
 
     # M = nan_to_num(M, nan=0)
     # H = log(H)
@@ -409,27 +413,29 @@ resolution = radians(5.0)
 all_months = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
               "november", "majus", "aprilis", "junius", "december2020"]
 months = ["januar"]
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_NASA/r_inv_r_over_Nmod_symmetrized"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_NZLD/r_inv_r_symmetrized"
-
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"
 
 result_roots = [
-    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized",
-    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/PERTH_IIGC/r_inv_r_symmetrized",
-    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/NZLD_IIGC/r_inv_r_symmetrized",
-    r"/Users/kelemensz/Documents/Research/GPS/process/triangular_method/processed_data/HKKS_IIGC/r_inv_r_symmetrized"]
+    r"CUTA_CUTB/r_inv_r_symmetrized", r"PERTH_NZLD/r_inv_r_symmetrized", r"PERTH_NASA/r_inv_r_symmetrized",
+    r"HKKS_PERTH/r_inv_r_symmetrized", r"HKKS_IIGC/r_inv_r_symmetrized", r"PERTH_IIGC/r_inv_r_symmetrized",
+    r"NZLD_TIDV/r_inv_r_symmetrized", r"CUTA_NZLD/r_inv_r_symmetrized", r"NASA_IIGC/r_inv_r_symmetrized",
+    r"NZLD_NASA/r_inv_r_symmetrized", r"NZLD_IIGC/r_inv_r_symmetrized", r"NZLD_HKKS/r_inv_r_symmetrized",
+    r"PERTH_TIDV/r_inv_r_symmetrized", r"HKKS_TIDV/r_inv_r_symmetrized", r"NASA_TIDV/r_inv_r_symmetrized",
+    r"CUTB30s_NZLD/r_inv_r_symmetrized", r"PERTH_IIGC/r_inv_r_symmetrized", r"HKKS_NASA/r_inv_r_symmetrized",
+    r"IIGC_TIDV/r_inv_r_symmetrized"]
 
+main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data"
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
-m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
-handle_raw_not_averaged_matrices(m, h, n)
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
+# m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
+# handle_raw_not_averaged_matrices(m, h, n)
 
-# for result_root in result_roots:
-#     m, h, n = create_averaged_plots_from_root(result_root, star_dir, all_months)
+for result_root in result_roots[9:12]:
+    root = os.path.join(main_root, result_root)
+    if not os.path.isdir(root):
+        print(root)
+        continue
+    print(root, '\n', '\n')
+    m, h, n = create_averaged_plots_from_root(root, star_dir, all_months)
 
 # =================================================================================================
 # =================================================================================================
