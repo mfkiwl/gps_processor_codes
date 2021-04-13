@@ -14,6 +14,8 @@ from scipy.ndimage import rotate
 from scipy.linalg import norm as nrm
 import copy as cp
 
+from utility.frecvently_used_functions import is_all_data, is_reliable
+
 s_o_l = 1.0  # 3.0*10**8
 satellite_positions0 = "all_sats_pos_time.csv"
 satellite_positions = "sats_pos_time_id.csv"
@@ -168,26 +170,6 @@ def get_mean_position(path, positions_file):
     user_ = pd.read_csv(os.path.join(path, positions_file), skiprows=1).values  # .transpose()
     return mean(user_, axis=0).astype('float64')
 
-
-def get_positions_std(path, filename, std_limit=30.0):
-    path = os.path.join(path, "allsatellites")
-    file = os.path.join(path, filename)
-    if os.path.isfile(file):
-        user_ = pd.read_csv(file, skiprows=1).values  # .transpose()
-        std_pos = mean(std(user_, axis=0))
-        print("                             STD: ", std_pos)
-        if std_pos > std_limit:
-            return True
-        return False
-    return False
-
-
-def is_reliable(A_day, B_day, needed_file):
-    stdUA = get_positions_std(A_day, needed_file)
-    stdUB = get_positions_std(B_day, needed_file)
-    if stdUA or stdUB:
-        return False
-    return True
 
 
 def extract_common_sats(satA, satB):
@@ -601,23 +583,6 @@ def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positio
     return day_data, day_count, day_cmap_n_mod
 
 
-def is_all_data(path, needed_files, add_allsatellites=False):
-    if add_allsatellites:
-        path = os.path.join(path, "allsatellites")
-    try:
-
-        list_files_with_paths = [f.path for f in os.scandir(path) if f.is_file()]
-
-        count = 0
-        for needed in needed_files:
-            for file in list_files_with_paths:
-                if os.path.basename(file) == needed:
-                    count += 1
-                    if count == len(needed_files):
-                        return True
-    except:
-        pass
-    return False
 
 
 def get_same_days_folders(root, needed_files):
@@ -785,6 +750,8 @@ def find_and_delete_wrong_data(path_A, path_B, result_path, needed_files, star_d
     d = 0
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
+        # mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=3.0)
+        # mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.5)  # NZLD es IIGC eseten 0.2
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
             condition = True  # month_name in ["marcius", "aprilis", "januar", "junius", "februar", "julius"]
@@ -833,9 +800,9 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
 
 # --------------------------------------------PERTH-Del-korea-symmetrized--------------------------------------------
-# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
-# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-# results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
+place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
 
 # --------------------------------------------PERTH-India-symmetrized--------------------------------------------
 # place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
@@ -914,9 +881,9 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
 
 # --------------------------------------------NASA-India--------------------------------------------
-place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
-results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_IIGC"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/NASA_IIGC/r_inv_r_symmetrized"
 
 
 # # # --------------------------------------------PERTH CUTA-CUTB--------------------------------------------

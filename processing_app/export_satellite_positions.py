@@ -12,10 +12,27 @@ from skyfield.positionlib import *
 import os
 from datetime import datetime
 
+# from utility.frecvently_used_functions import get_obs_files_simple, create_dir, create_generalinfo_path
+# from frecvently_used_functions import get_obs_files_simple, create_dir, create_generalinfo_path
+
 
 def get_file_name(file):
     f, ext = os.path.splitext(file)
     return f.split("/")[-1]
+
+
+def create_dir(root_path, dir_name):
+    results_dir = os.path.join(root_path, dir_name)
+    if not os.path.isdir(results_dir):
+        os.makedirs(results_dir)
+    return results_dir
+
+
+def create_generalinfo_path(directory):
+    generalinfo_path = os.path.join(directory, 'allsatellites')
+    if not os.path.exists(generalinfo_path):
+        os.makedirs(generalinfo_path)
+    return generalinfo_path
 
 
 def calc_user_pos(measurements_in, dataset, resultspath):
@@ -169,13 +186,6 @@ def create_dir_for_results(obs_file, new_root_directory):
     return new_dir
 
 
-def create_generalinfo_path(directory):
-    generalinfo_path = os.path.join(directory, 'allsatellites')
-    if not os.path.exists(generalinfo_path):
-        os.makedirs(generalinfo_path)
-    return generalinfo_path
-
-
 def is_all_data(path, needed_files, add_allsatellites=False):
     if add_allsatellites:
         path = os.path.join(path, "allsatellites")
@@ -194,12 +204,6 @@ def is_all_data(path, needed_files, add_allsatellites=False):
         pass
     return False
 
-
-def create_dir(root_path, dir_name):
-    results_dir = os.path.join(root_path, dir_name)
-    if not os.path.isdir(results_dir):
-        os.makedirs(results_dir)
-    return results_dir
 
 
 def process_many_from_obs_root(obs_location, root_directory, needed_files, month_names):
@@ -245,16 +249,16 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
 
 
 #                    NASA
-obs_path = r"/Volumes/KingstonSSD/GPS/NASA/obs_files"
-destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+# obs_path = r"/Volumes/KingstonSSD/GPS/NASA/obs_files"
+# destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
 
 #                   PERTH
 # obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/PERTH/rinex_obs/januar"
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
 
 #                   HKKS
-# obs_path = r"/Volumes/KingstonSSD/GPS/HKG/HKKS/obs_files/januar"
-# destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/process_HKKS"
+obs_path = r"/Volumes/KingstonSSD/GPS/HKG/HKKS/obs_files"
+destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS"
 
 #                   NZLD
 # obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/NZ/obs_files/ARTA_smaller_obs"
@@ -285,7 +289,7 @@ set1 = month_names[:6]
 for m in set1:
     obs_path_ = os.path.join(obs_path, m)
     if os.path.isdir(obs_path_):
-        print(obs_path_)
+        print('\n', obs_path_, '\n', '\n')
         process_many_from_obs_root(obs_path_, destination_path, needed_files, month_names)
 
 

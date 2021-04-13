@@ -294,9 +294,12 @@ def func_string(lista, i):
 def get_raw_GCS_data(day_path, filename="GCS_Ndir_measure_Nmod_AB_and_BA.csv"):
     try:
         df = pd.read_csv(os.path.join(day_path, filename), index_col=0)
+        df['1'] = df['1'] / df['2']   # it divides the measure by the nmod values
+        print('Divided: ', df.head())
     except:
         return 0
     rows = df.values
+    # print(rows[:5])
     ndirection = rows[:, 0].tolist()
     measure_nmod = rows[:, 1:].tolist()
     list(map(lambda i: func_string(ndirection, i), range(0, len(ndirection))))
@@ -304,23 +307,23 @@ def get_raw_GCS_data(day_path, filename="GCS_Ndir_measure_Nmod_AB_and_BA.csv"):
         for i in range(len(ndirection)):
             # measure_nmod[i] = ndirection[i] + measure_nmod[i]
             measure_nmod[i].insert(0, ndirection[i])
+        # print(array(measure_nmod, dtype=object)[:5])
         return array(measure_nmod, dtype=object)
     return 0
 
 
 def operations_on_raw_data(data):
-    # data = pd.DataFrame(data)
-    # print(data)
-    # data[1] = data[1] * data[2]
-    # print(data)
-    l = int(len(data) / 2)
-    data = data[:l]
+    # l = int(len(data) / 2)
+    # data = data[:l]
+    # print(data[2][2])
     return data
 
 
 def process_one_day_rawGCS(day_path, resolution, fill_out=0.0):
     raw_results_GCS = get_raw_GCS_data(day_path)
+    # raw_results_GCS = operations_on_raw_data(raw_results_GCS)
     if type(raw_results_GCS) != int:
+        # raw_results_GCS = operations_on_raw_data(raw_results_GCS)
         raw_results_GCS = operations_on_raw_data(raw_results_GCS)
         print("Raw results in GCS are in! (data size)", len(raw_results_GCS))
         day_data, day_count, day_cmap_n_mod = process_raw_GCS_data(raw_results_GCS, resolution)
@@ -338,23 +341,28 @@ def create_averaged_plots_from_root(root_0, star_dir, months=None):
     sum_all_n_mod = []
     subfolders_with_paths_months = [f.path for f in os.scandir(root_0) if f.is_dir()]
     # star_directions_in_GCS = get_stars_in_GCS(star_dir, day_date="20200101")
-    for month_root in subfolders_with_paths_months:
+    for month_root in subfolders_with_paths_months[:]:
         month_name = str(month_root).split("/")[-1]
         if months and month_name in months:
             days_with_paths = [f.path for f in os.scandir(month_root) if f.is_dir()]
             print("Month name: ", month_name, "  nr days: ", len(days_with_paths))
-            for day_root in days_with_paths:
-                # not_simmetrized_resultfile = os.path.join(day_root, "sum_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
-                not_simmetrized_resultfile = os.path.join(day_root, "asimm_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
+            for day_root in days_with_paths[:]:
+                measure_resultfile = os.path.join(day_root, "sum_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
+                # measure_resultfile = os.path.join(day_root, "asimm_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
+                # histogram_resultfile = os.path.join(day_root, "asimm_histogram_" + str(int(degrees(resolution))) + '.csv')
+                histogram_resultfile = os.path.join(day_root, "__histogram_" + str(int(degrees(resolution))) + '.csv')
                 start = time.time()
-                if True:  # not os.path.isfile(not_simmetrized_resultfile):
+                if True:  #not os.path.isfile(not_simmetrized_histogram):
                     M, H, N = process_one_day_rawGCS(day_root, resolution)
-                    if type(M) != int:
+                    if type(H) != int:
+                        print('Saved: ', histogram_resultfile)
                         sum_all_cmap.append(M)
-                        pd.DataFrame(M).to_csv(not_simmetrized_resultfile, index=True)
+                        pd.DataFrame(M).to_csv(measure_resultfile, index=True)
                         sum_all_hist.append(H)
+                        pd.DataFrame(H).to_csv(histogram_resultfile, index=True)
                         sum_all_n_mod.append(N)
-
+                else:
+                    print('---   Already calculated: ', day_root.split("/")[-1], '   ---')
                 print('Elapsed time of the current day: ', time.time() - start, day_root.split("/")[-1])
     print("Total number of days:  ", len(sum_all_cmap))
     sum_all_cmap = sum(array(sum_all_cmap), axis=0)
@@ -423,13 +431,14 @@ result_roots = [
     r"CUTB30s_NZLD/r_inv_r_symmetrized", r"PERTH_IIGC/r_inv_r_symmetrized", r"HKKS_NASA/r_inv_r_symmetrized",
     r"IIGC_TIDV/r_inv_r_symmetrized"]
 
-main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data"
+# main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data"
+main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_divided_by_n"
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
 # m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
 # handle_raw_not_averaged_matrices(m, h, n)
 
-for result_root in result_roots[9:12]:
+for result_root in result_roots[:1]:
     root = os.path.join(main_root, result_root)
     if not os.path.isdir(root):
         print(root)
