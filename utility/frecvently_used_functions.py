@@ -442,7 +442,7 @@ def plot_the_three_raw_matrix_from_path(path):
     plt.show()
 
 
-def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, round=True):
+def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, not_symmetrised=False, round=True):
     ind_no_data = array(H < 1)
     M[ind_no_data] = 0.0
     N[ind_no_data] = 0.0
@@ -484,9 +484,11 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, roun
 
     # plot_mollweid_simple(M[::-1].T)
     id = 'symmetrized'
-    # id = '-'
-    # id_png = 'not_symmetrized'
     id_png = 'symmetrized'
+    if not_symmetrised:
+        id = '-'
+        id_png = 'not_symmetrized'
+
 
     plt.title("<r-1/r> {} ({}_{})".format(id, name, nr_days))
     # plt.title("histogram {} ({}_{})".format(id, name, nr_days))
@@ -500,21 +502,10 @@ def select_cmap_hist_n_mod(file_list, histogram_string='', measure_string='', nm
     cmap = None
     n_mod = None
     for file in file_list:
-        if "histogram_not_averaged" in str(os.path.split(file)[-1]):
-            # if "__histogram_" in str(os.path.split(file)[-1]):
-            # if "asimm_histogram_" in str(os.path.split(file)[-1]):
-            #     print('Hist: ', str(os.path.split(file)[-1]))
+        if histogram_string in str(os.path.split(file)[-1]):
             hist = file
-        # if "measure_not_averaged" in str(os.path.split(file)[-1]):  # or "measure" in str(os.path.split(file)[-1]):
-        # if "sum_measure_r_inv_r_" in str(os.path.split(file)[-1]):  # or "measure" in str(os.path.split(file)[-1]):
-        if "measure_r_inv_r_dividedbyNmod" in str(
-                os.path.split(file)[-1]):  # or "measure" in str(os.path.split(file)[-1]):
-            # # # # if "divNmod" in str(os.path.split(file)[-1]) or "asimm_measure_r_inv_r_" in str(os.path.split(file)[-1]):
-            # if "asimm_measure_r_inv_r_" in str(os.path.split(file)[-1]):
-            #     print('Measure: ', str(os.path.split(file)[-1]))
+        if measure_string in str(os.path.split(file)[-1]):  # or "measure" in str(os.path.split(file)[-1]):
             cmap = file
-        if "n_mod_not_averaged" in str(os.path.split(file)[-1]):
+        if nmod_string in str(os.path.split(file)[-1]):
             n_mod = file
-    # print(hist)
-    # print(n_mod)
     return cmap, hist, n_mod
