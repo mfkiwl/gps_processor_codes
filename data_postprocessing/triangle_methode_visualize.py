@@ -139,12 +139,12 @@ def save_imshows_for_all(main_root, result_roots, fig_dir, all_months):
         # m, h, n, n_days = create_averaged_plots_from_root(root, all_months)
         m, h, n, n_days = create_averaged_plots_from_root_and_filter_by_positionsSTD(
             root, needed_files, months=all_months,
-            matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(2))
+            matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(1))
         try:
             handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair + "_int", nr_days=n_days,
-                                             round=True, not_symmetrised=True)
+                                             round=True, not_symmetrised=False)
             handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, nr_days=n_days, round=False
-                                             , not_symmetrised=True)
+                                             , not_symmetrised=False)
         except:
             pass
 
