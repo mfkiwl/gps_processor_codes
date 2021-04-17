@@ -285,7 +285,7 @@ needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
 month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
                "november", "majus", "aprilis", "junius", "december2020"]
 
-set1 = month_names[:6]
+set1 = month_names[8:]
 for m in set1:
     obs_path_ = os.path.join(obs_path, m)
     if os.path.isdir(obs_path_):

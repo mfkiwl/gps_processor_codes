@@ -321,7 +321,6 @@ def operations_on_raw_data(data):
 
 def process_one_day_rawGCS(day_path, resolution, fill_out=0.0):
     raw_results_GCS = get_raw_GCS_data(day_path)
-    # raw_results_GCS = operations_on_raw_data(raw_results_GCS)
     if type(raw_results_GCS) != int:
         # raw_results_GCS = operations_on_raw_data(raw_results_GCS)
         raw_results_GCS = operations_on_raw_data(raw_results_GCS)
@@ -347,19 +346,19 @@ def create_averaged_plots_from_root(root_0, star_dir, months=None):
             days_with_paths = [f.path for f in os.scandir(month_root) if f.is_dir()]
             print("Month name: ", month_name, "  nr days: ", len(days_with_paths))
             for day_root in days_with_paths[:]:
-                measure_resultfile = os.path.join(day_root, "sum_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
+                measure_resultfile = os.path.join(day_root, "measure_r_inv_r_dividedbyNmod_" + str(int(degrees(resolution))) + '.csv')
                 # measure_resultfile = os.path.join(day_root, "asimm_measure_r_inv_r_" + str(int(degrees(resolution))) + '.csv')
                 # histogram_resultfile = os.path.join(day_root, "asimm_histogram_" + str(int(degrees(resolution))) + '.csv')
-                histogram_resultfile = os.path.join(day_root, "__histogram_" + str(int(degrees(resolution))) + '.csv')
+                # histogram_resultfile = os.path.join(day_root, "histogram_" + str(int(degrees(resolution))) + '.csv')
                 start = time.time()
                 if True:  #not os.path.isfile(not_simmetrized_histogram):
                     M, H, N = process_one_day_rawGCS(day_root, resolution)
                     if type(H) != int:
-                        print('Saved: ', histogram_resultfile)
+                        # print('Saved: ', histogram_resultfile)
                         sum_all_cmap.append(M)
                         pd.DataFrame(M).to_csv(measure_resultfile, index=True)
                         sum_all_hist.append(H)
-                        pd.DataFrame(H).to_csv(histogram_resultfile, index=True)
+                        # pd.DataFrame(H).to_csv(histogram_resultfile, index=True)
                         sum_all_n_mod.append(N)
                 else:
                     print('---   Already calculated: ', day_root.split("/")[-1], '   ---')
@@ -431,14 +430,15 @@ result_roots = [
     r"CUTB30s_NZLD/r_inv_r_symmetrized", r"PERTH_IIGC/r_inv_r_symmetrized", r"HKKS_NASA/r_inv_r_symmetrized",
     r"IIGC_TIDV/r_inv_r_symmetrized"]
 
-# main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data"
-main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_divided_by_n"
+main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data"
+# main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_divided_by_n"
+
 # results_root = r"/Volumes/KingstonSSD/GPS/processed_data/triangular_method/processed_data/NZLD_TIDV/r_inv_r_symmetrized"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test"
 # m, h, n = create_averaged_plots_from_root(results_root, star_dir, all_months)
 # handle_raw_not_averaged_matrices(m, h, n)
 
-for result_root in result_roots[:1]:
+for result_root in result_roots[12:]:
     root = os.path.join(main_root, result_root)
     if not os.path.isdir(root):
         print(root)
