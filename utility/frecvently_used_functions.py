@@ -89,7 +89,7 @@ def too_bad_positions_std(path, filename, std_limit=10.0):
         if std_pos > std_limit:
             return True
         return False
-    return False
+    return True
 
 
 def is_reliable(A_day, B_day, needed_file):
@@ -100,10 +100,13 @@ def is_reliable(A_day, B_day, needed_file):
     return True
 
 
-def are_reliable(A_day, B_day, needed_file):
-    if is_all_data(A_day, needed_file, add_allsatellites=True) and is_all_data(B_day, needed_file, add_allsatellites=True):
-        stdUA = too_bad_positions_std(A_day, needed_file[0])
-        stdUB = too_bad_positions_std(B_day, needed_file[0])
+def are_reliable(A_day, B_day, needed_file, std_limits=None):
+    if std_limits is None:
+        std_limits = [10.0, 10.0]
+    if is_all_data(A_day, [needed_file], add_allsatellites=True) and is_all_data(B_day, [needed_file],
+                                                                                 add_allsatellites=True):
+        stdUA = too_bad_positions_std(A_day, needed_file, std_limit=std_limits[0])
+        stdUB = too_bad_positions_std(B_day, needed_file, std_limit=std_limits[1])
         if not stdUA and not stdUB:
             return True
     return False
@@ -113,7 +116,6 @@ def is_all_data(path, needed_files, add_allsatellites=False):
     if add_allsatellites:
         path = os.path.join(path, "allsatellites")
     try:
-
         list_files_with_paths = [f.path for f in os.scandir(path) if f.is_file()]
 
         count = 0
@@ -124,8 +126,7 @@ def is_all_data(path, needed_files, add_allsatellites=False):
                     if count == len(needed_files):
                         return True
     except:
-        pass
-    return False
+        return False
 
 
 def rotateAntiClockwise(array):
@@ -359,17 +360,16 @@ def plot_on_sphere(WW):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, projection='3d')
     # WW = get_mean_matrix(root_dir)
-
-    u = np.linspace(0, 2 * np.pi, len(WW))
-    v = np.linspace(0, np.pi, len(WW[0]))
+    u = linspace(0, 2 * pi, len(WW))
+    v = linspace(0, pi, len(WW[0]))
 
     # create the sphere surface
-    XX = 10 * np.outer(np.cos(u), np.sin(v))
-    YY = 10 * np.outer(np.sin(u), np.sin(v))
-    ZZ = 10 * np.outer(np.ones(np.size(u)), np.cos(v))
+    XX = 10 * outer(cos(u), sin(v))
+    YY = 10 * outer(sin(u), sin(v))
+    ZZ = 10 * outer(ones(size(u)), cos(v))
 
-    WW = WW + abs(np.amin(WW))
-    myheatmap = WW / np.amax(WW)
+    WW = WW + abs(amin(WW))
+    myheatmap = WW / amax(WW)
 
     # ~ ax.scatter( *zip( *pointList ), color='#dd00dd' )
     ax.plot_surface(XX, YY, ZZ, cstride=1, rstride=1, facecolors=cm.jet(myheatmap))
@@ -392,6 +392,8 @@ def prepear_for_sphere(m, h):
     M[M < 0] = -1
     M[M > 0] = 1
     return M
+
+
 #  -----------------------------------
 # M = prepear_for_sphere(m, h)
 # plot_on_sphere(M)
@@ -456,6 +458,7 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, not_
     # nan_to_num(N, nan=0.0)
 
     M = divide(M, H)
+
     # N = divide(N, H)
     # N = nan_to_num(N, nan=0.0)
     # M = nan_to_num(M, nan=0)
@@ -468,19 +471,19 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, not_
     b = a  # * 2
     # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
+
+    # M[M > nanmax(M) / 100] = 0
+    # M[M < -1 * abs(nanmin(M)) / 100] = 0
+
     M[M == 0.0] = nan
     # M = M * -1
     if round:
         M[M < 0] = -1
-        M[M > 0] = 1
+        M[M > 0] = +1
 
     # M = nan_to_num(M, nan=0)
     # H = log(H)
     # plot_save_imshow_3_maps([H, M, N], ["Histogram", "(|1-r|/|n|)", "<n_mod>"], root_directory=None, resolution="5", logplot=False, show=True)
-
-    plt.imshow(M)
-    # plt.imshow(H)
-    plt.colorbar()
 
     # plot_mollweid_simple(M[::-1].T)
     id = 'symmetrized'
@@ -489,10 +492,14 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, not_
         id = '-'
         id_png = 'not_symmetrized'
 
+    plt.imshow(M)
+    # plt.imshow(H)
+    plt.colorbar()
 
     plt.title("<r-1/r> {} ({}_{})".format(id, name, nr_days))
     # plt.title("histogram {} ({}_{})".format(id, name, nr_days))
     fig_name1 = os.path.join(fig_directory, '{}_{}.png'.format(name, id_png))
+    # fig_name1 = os.path.join(fig_directory, '{}_{}_histogram.png'.format(name, id_png))
     plt.savefig(fig_name1, bbox_inches='tight')
     plt.clf()
 

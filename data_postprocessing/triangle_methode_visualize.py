@@ -3,6 +3,7 @@ import os
 from data_postprocessing.data_locations_handler import AllGPSDataLocations
 from utility.frecvently_used_functions import find_corresponding_dirs_in_different_roots, are_reliable, is_all_data, \
     get_csv_file, select_cmap_hist_n_mod, get_matrices_from_paths, handle_raw_not_averaged_matrices
+import matplotlib.pyplot as plt
 
 
 class DefaultsVisualize:
@@ -11,7 +12,11 @@ class DefaultsVisualize:
                              3: {'H': "histogram_not_averaged", 'M': "sum_measure_r_inv_r_", 'N': "n_mod_not_averaged"},
                              4: {'H': "histogram_not_averaged", 'M': "measure_r_inv_r_dividedbyNmod",
                                  'N': "n_mod_not_averaged"},
-                             5: {'H': "histogram_not_averaged", 'M': "divNmod", 'N': "n_mod_not_averaged"}
+                             5: {'H': "histogram_not_averaged", 'M': "divNmod", 'N': "n_mod_not_averaged"},
+                             6: {'H': "not_symmetrical_histogram", 'M': "not_symmetrical_measure",
+                                 'N': "not_symmetrical_n_mod"},
+                             7: {'H': "angle_filtered_histogram", 'M': "angle_filtered_measure",
+                                 'N': "angle_filtered_n_mod"}
 
                              }
 
@@ -21,6 +26,7 @@ def create_averaged_plots_from_root(root_0, matrix_names, months=None):
     sum_all_hist = []
     sum_all_n_mod = []
     subfolders_with_paths_months = [f.path for f in os.scandir(root_0) if f.is_dir()]
+    print(subfolders_with_paths_months)
     for month_root in subfolders_with_paths_months:
         month_name = str(month_root).split("/")[-1]
         if months and month_name in months:
@@ -67,7 +73,7 @@ def create_averaged_plots_from_root_and_filter_by_positionsSTD(root_0, needed_fi
     month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
     subfolders_with_paths_months = [f.path for f in os.scandir(root_0) if f.is_dir()]
     for A_month, B_month in month_pairs:
-        print(A_month)
+        # print(A_month)
         for month_root in subfolders_with_paths_months:
             month_name_of_position_data = os.path.split(A_month)[-1]
             month_name_triangle_data = str(month_root).split("/")[-1]
@@ -78,6 +84,7 @@ def create_averaged_plots_from_root_and_filter_by_positionsSTD(root_0, needed_fi
                 # print("Month name: ", month_name_triangle_data, "  nr days (triangle): ", len(days_with_paths),
                 #       'position data:', len(day_pairs))
                 for A_day, B_day in day_pairs:
+                    print(A_day)
                     for day_root in days_with_paths:
                         date_from_positions = str(os.path.split(B_day)[-1])[-8:]
                         date_from_triangle_results = str(os.path.split(day_root)[-1])
@@ -111,24 +118,57 @@ def create_averaged_plots_from_root_and_filter_by_positionsSTD(root_0, needed_fi
     return sum_all_cmap, sum_all_hist, sum_all_n_mod, nr_days
 
 
-months1 = ["julius", "szeptember", "augusztus", "november", "junius", "december2020"]
+months1 = ["januar", "februar", "marcius", "november", "junius", "december2020", "aprilis"]
 
 # fig_dir = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/figures_filtered_histograms"
-results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_divided_by_n/CUTA_CUTB/r_inv_r_symmetrized"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_divided_by_n/CUTA_CUTB/r_inv_r_symmetrized"
 
-pair = results_root.split("/")[-2]
-print(pair)
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/CUTA_CUTB/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test_old/CUTA_CUTB/r_inv_r_symmetrized"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test_old/CUTA_CUTB/r_inv_r_symmetrized"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/CUTA_CUTB/r_inv_r_symmetrized"
+
+
 # fig_dir = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_divided_by_n"
 # m, h, n, n_days = create_averaged_plots_from_root_and_filter_by_positionsSTD(results_root, needed_files=[
-#     "user_pos_allsatellites.csv"], months=all_months)
-# handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair + "_int", nr_days=n_days, round=True)
-# handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, nr_days=n_days, round=False)
+#     "user_pos_allsatellites.csv"], months=None, matrix_names=['', '', ''])
+
+# result_roots = AllGPSDataLocations.result_roots
+# pair = results_root.split("/")[-2]
+
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/not_symmetrized"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures"
+fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/maxangle60"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/vertical_cone70"
+
+for place in AllGPSDataLocations.OBS_file_locations.keys():
+    if place != "NASA":
+        try:
+            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}/r_inv_r_twoSats".format(
+                place)
+            # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}_vertical_cone70/r_inv_r_twoSats".format(
+            #     place)
+            m, h, n, n_days = create_averaged_plots_from_root(results_root,
+                                                              matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(
+                                                                  7),
+                                                              months=AllGPSDataLocations.all_months)
+            # print(m, n, h)
+            # plt.imshow(h)
+            # plt.colorbar()
+            # plt.show()
+
+            pair = place
+            handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair + "_int", nr_days=n_days,
+                                             round=True)
+            handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, nr_days=n_days, round=False)
+        except:
+            print('')
 
 
 def save_imshows_for_all(main_root, result_roots, fig_dir, all_months):
     needed_files = ["user_pos_allsatellites.csv"]
 
-    for result_root in result_roots[:]:
+    for result_root in result_roots[12:13]:
         root = os.path.join(main_root, result_root)
         if not os.path.isdir(root):
             print(root)
@@ -136,10 +176,12 @@ def save_imshows_for_all(main_root, result_roots, fig_dir, all_months):
         print(root, '\n', '\n')
         pair = result_root.split("/")[-2]
         print(pair)
-        # m, h, n, n_days = create_averaged_plots_from_root(root, all_months)
-        m, h, n, n_days = create_averaged_plots_from_root_and_filter_by_positionsSTD(
-            root, needed_files, months=all_months,
-            matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(1))
+        m, h, n, n_days = create_averaged_plots_from_root(root,
+                                                          matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(1),
+                                                          months=all_months)
+        # m, h, n, n_days = create_averaged_plots_from_root_and_filter_by_positionsSTD(
+        #     root, needed_files, months=all_months,
+        #     matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(1))
         try:
             handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair + "_int", nr_days=n_days,
                                              round=True, not_symmetrised=False)
@@ -149,12 +191,11 @@ def save_imshows_for_all(main_root, result_roots, fig_dir, all_months):
             pass
 
 
-main_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data"
-
+main_root = AllGPSDataLocations.main_root
 # fig_dir = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/figures_filtered_divided_by_n"
-fig_dir = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/figures_filtered"
+fig_dir = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/figures_rework"
 
-save_imshows_for_all(main_root, AllGPSDataLocations.result_roots, fig_dir, AllGPSDataLocations.all_months)
+# save_imshows_for_all(main_root, AllGPSDataLocations.result_roots, fig_dir, AllGPSDataLocations.all_months)
 
 
 # M = rotate(M, -90)

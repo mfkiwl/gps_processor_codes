@@ -14,7 +14,12 @@ from scipy.ndimage import rotate
 from scipy.linalg import norm as nrm
 import copy as cp
 
-from utility.frecvently_used_functions import is_all_data, is_reliable
+
+import sys
+sys.path.insert(1, '/Users/kelemensz/Documents/Research/GPS/gps_processor_codes/utility')
+# from utility.frecvently_used_functions import is_all_data, is_reliable
+# /Users/kelemensz/Documents/Research/GPS/gps_processor_codes/data_postprocessing/triangle_methode_few_positions_symmetrized.py
+from frecvently_used_functions import is_all_data, is_reliable
 
 s_o_l = 1.0  # 3.0*10**8
 satellite_positions0 = "all_sats_pos_time.csv"
@@ -583,8 +588,6 @@ def process_one_day_symmetrized(pathA, pathB, star_dir, resolution, mean_positio
     return day_data, day_count, day_cmap_n_mod
 
 
-
-
 def get_same_days_folders(root, needed_files):
     list_subfolders_with_paths = [f.path for f in os.scandir(root) if f.is_dir()]
     for folderA in list_subfolders_with_paths:
@@ -613,13 +616,16 @@ def get_mean_pos_from_root(root_path, positions_file, max_deviations=0.5, nofilt
             day_root = os.path.join(day_root, "allsatellites")
             if is_all_data(day_root, [positions_file], add_allsatellites=False):
                 mean_pos = get_mean_position(day_root, positions_file)
-                if nofilter:
-                    print("Nofilter true: ", mean_pos)
-                    return mean_pos
-                # if str(os.path.split(day_root)[-2]).split("/")[-1][:4] in ['NZLD', 'NZDL']:
-                if str(os.path.split(day_root)[-2]).split("/")[-1][:4] not in ['BLUF', 'HOKI', 'MAVL', 'LKTA', 'MTJO']:
-                    # print(str(os.path.split(day_root)[-2]).split("/")[-1], mean_pos)
-                    positions.append(mean_pos)
+                if not isnan(min(mean_pos)):
+                    # print(day_root)
+                    # print(mean_pos)
+                    if nofilter:
+                        print("Nofilter true: ", mean_pos)
+                        return mean_pos
+                    # if str(os.path.split(day_root)[-2]).split("/")[-1][:4] in ['NZLD', 'NZDL']:
+                    if str(os.path.split(day_root)[-2]).split("/")[-1][:4] not in ['BLUF', 'HOKI', 'MAVL', 'LKTA', 'MTJO']:
+                        # print(str(os.path.split(day_root)[-2]).split("/")[-1], mean_pos)
+                        positions.append(mean_pos)
     positions = array(positions)
     std_pos = std(positions, axis=0)
     print("Before filter: ", len(positions), std_pos)
@@ -671,7 +677,7 @@ def find_same_days_and_process(path_A, path_B, result_path, needed_files, star_d
     if os.path.isdir(path_A) and os.path.isdir(path_B) and os.path.isdir(result_path):
         month_pairs = find_corresponding_dirs_in_different_roots(path_A, path_B)
         mean_pos_A = get_mean_pos_from_root(path_A, needed_files[0], max_deviations=3.0)
-        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=0.5)  # NZLD es IIGC eseten 0.2
+        mean_pos_B = get_mean_pos_from_root(path_B, needed_files[0], max_deviations=1.5)  # NZLD es IIGC eseten 0.2
         # print('Common months:  ', month_pairs)
         for A_month, B_month in month_pairs:
             month_name = os.path.split(A_month)[-1]
@@ -766,6 +772,7 @@ def find_and_delete_wrong_data(path_A, path_B, result_path, needed_files, star_d
                     cond1 = is_all_data(A_day, needed_files[1:], True) or is_all_data(A_day, [satellite_positions0], True)
                     cond2 = is_all_data(B_day, needed_files[1:], True) or is_all_data(B_day, [satellite_positions0], True)
                     if cond1 and cond2:
+                        # print('cond')
                         if not is_reliable(A_day, B_day, needed_files[0]):
                             print('Not reliable: ', date)
                         # result_month = create_dir(result_path, month_name)
@@ -800,9 +807,9 @@ needed_files = ["user_pos_allsatellites.csv", satellite_positions]
 
 
 # --------------------------------------------PERTH-Del-korea-symmetrized--------------------------------------------
-place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
-place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
-results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
+# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+# results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/PERTH_NASA/r_inv_r_symmetrized"
 
 # --------------------------------------------PERTH-India-symmetrized--------------------------------------------
 # place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
@@ -887,9 +894,12 @@ results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/proce
 
 
 # # # --------------------------------------------PERTH CUTA-CUTB--------------------------------------------
-# place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
-# place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
+place_A = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
+place_B = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements"
 # results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/CUTA_CUTB/r_inv_r_symmetrized"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test_old/CUTA_CUTB"
+results_root = create_dir(results_root, r'r_inv_r_symmetrized')
+
 
 # --------------------------------------------Hong-Kong-TIDV--------------------------------------------
 # place_A = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS"
@@ -902,5 +912,5 @@ results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/proce
 # results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_data/IIGC_TIDV/r_inv_r_symmetrized"
 
 
-# find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
-find_and_delete_wrong_data(place_A, place_B, results_root, needed_files, star_dir, resolution)
+find_same_days_and_process(place_A, place_B, results_root, needed_files, star_dir, resolution)
+# find_and_delete_wrong_data(place_A, place_B, results_root, needed_files, star_dir, resolution)

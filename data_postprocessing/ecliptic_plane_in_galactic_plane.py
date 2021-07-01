@@ -1,83 +1,30 @@
-import time
 
 from numpy import *
 import pandas as pd
 import matplotlib.pyplot as plt
-
-from itertools import chain, islice
 import pymap3d as pm
 import os
-from vpython import rotate
 import pylab as pl
 import math
-from scipy.ndimage import rotate
-from scipy.linalg import norm as nrm
-import copy as cp
+import sys
+
+sys.path.insert(1, '/Users/kelemensz/Documents/Research/GPS/gps_processor_codes/utility')
+from frecvently_used_functions import plot_on_sphere
+
+sys.path.insert(1, '/Users/kelemensz/Documents/Research/GPS/gps_processor_codes/data_postprocessing')
+from data_locations_handler import AllGPSDataLocations
+from postprocess_utility.general_functions import get_mean_direction_over_time
+from triangle_method_rework.rework_lib import get_global_stars, Defaults, ecef_to_gcs, \
+    get_ij_on_map, create_dir, rotate2darray, plot_mollweid, normvec
+
+# from data_postprocessing.triangle_method_rework.triangle_with_two_satellites import process_raw_GCS_data
 
 s_o_l = 1.0  # 3.0*10**8
 # satellite_positions = "all_sats_pos_time.csv"
 satellite_positions = "sats_pos_time_id.csv"
 
 
-def rotateAntiClockwise(array):
-    return rotate(array, 90)
-
-
-def getSTARS_for_galactic_system(path):
-    # D = normvec(pd.read_csv(path+'/star_d_positions.csv',skiprows=0).values)
-    # S = normvec(pd.read_csv(path+'/star_s_positions.csv',skiprows=0).values)
-    D = normvec(pd.read_csv(path + '/Denebola_positions.csv', skiprows=0).values)
-    S = normvec(pd.read_csv(path + '/Sadalmelik_positions.csv', skiprows=0).values)
-
-    sun = pd.read_csv(path + '/SUN_positions.csv', skiprows=0).values
-    galactic_n_p = pd.read_csv(path + '/GNP_positions.csv', skiprows=0).values
-    galactic_center = pd.read_csv(path + '/GC_positions.csv', skiprows=0).values
-
-    # star_1 = pd.read_csv(path+'/star_Mirphak_positions.csv',skiprows=0).values
-    # star_2 = pd.read_csv(path+'/star_Vega_positions.csv',skiprows=0).values
-
-    # nunki = pd.read_csv(path+'/star_Nunki_positions.csv',skiprows=0).values
-    # capella = pd.read_csv(path+'/star_Capella_positions.csv',skiprows=0).values
-    nunki = pd.read_csv(path + '/Nunki_positions.csv', skiprows=0).values
-    capella = pd.read_csv(path + '/Capella_positions.csv', skiprows=0).values
-    return sun, galactic_n_p, galactic_center, nunki, capella, S, D
-
-
-def get_mean_direction_over_time(systems, directions):
-    l = min(len(directions), len(systems[0]))
-    phi = 0.
-    theta = 0.
-    for i in range(l):
-        out = cartesian_to_galactic(array([systems[0][i], systems[1][i], systems[2][i]]), directions[i])
-        theta += out[0]
-        phi += out[1]
-    return theta / float(l), phi / float(l)
-
-
-def normvec(vec):
-    a = empty(shape(vec))
-    for i in range(len(vec)):
-        a[i] = unit(vec[i])
-    return a
-
-
-def scal(v1, v2):
-    return vdot(array(v1), array(v2))
-
-
-def unit(v):
-    return 1 / sqrt(scal(v, v)) * array(v)
-
 # =====================================================================================================================
-
-
-def transform_matrix(f1, f2):  # transforms from f1 to f2
-    R = array([
-        [dot(f2[0], f1[0]), dot(f2[0], f1[1]), dot(f2[0], f1[2])],
-        [dot(f2[1], f1[0]), dot(f2[1], f1[1]), dot(f2[1], f1[2])],
-        [dot(f2[2], f1[0]), dot(f2[2], f1[1]), dot(f2[2], f1[2])]
-    ])
-    return R
 
 
 def get_theta_phi(v):
@@ -88,14 +35,6 @@ def get_theta_phi(v):
     if 0.99 < v[2] and 1.01 > v[2] and -0.01 < v[1] and 0.01 > v[1] and -0.01 < v[0] and 0.01 > v[0]:
         return 0.0, 90.0
     return None, None
-
-
-def ecef_to_gcs(system, vector):
-    vector = unit(vector)
-    system = normvec(system)
-    ECEF = array(([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
-    R = transform_matrix(ECEF, system)
-    return around(R.dot(vector), decimals=3)
 
 
 def cartesian_to_galactic(system, vector):
@@ -111,14 +50,6 @@ def cartesian_to_galactic(system, vector):
     return theta, phi
 
 
-def cart2sph(x, y, z):
-    hxy = hypot(x, y)
-    r = hypot(hxy, z)
-    el = arctan2(z, hxy)
-    az = arctan2(y, x)
-    return az, el
-
-
 def cartesian_to_spherical(vector):
     theta, phi = get_theta_phi(vector)
     ECEF = array(([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]))
@@ -130,36 +61,6 @@ def cartesian_to_spherical(vector):
 
 # =================================================================================================
 # =================================================================================================
-
-
-def get_global_stars(star_dir, directory):
-    star_dirs = [f.path for f in os.scandir(star_dir) if f.is_dir()]
-    for stardir in star_dirs:
-        if directory[-8:] == stardir[-8:]:
-            return get_stars_for_CMBR_cmap(stardir)
-
-
-def get_stars_for_CMBR_cmap(path):
-    sun, galactic_n_p, galactic_center, nunki, galactic_anti_center, S, D = getSTARS_for_galactic_system(path)
-
-    sun = normvec(sun)
-    galactic_n_p = normvec(galactic_n_p)
-    galactic_center = normvec(galactic_center)
-    galactic_anti_center = normvec(galactic_anti_center)
-    nunki = normvec(nunki)
-    Nx = normvec(galactic_center).astype('float64')
-    Nz = normvec(galactic_n_p).astype('float64')
-    Ny = -get_third_dir_by_cross_product(Nz, Nx)
-
-    return Nx, Ny, Nz, S, D, sun
-
-
-def get_third_dir_by_cross_product(A, B):
-    l = min(len(A), len(B))
-    C = empty((l, 3))
-    for i in range(l):
-        C[i] = cross(A[i], B[i])
-    return normvec(C)
 
 
 def phi_theta_map_from_directions(vectors, resolution):
@@ -176,33 +77,7 @@ def phi_theta_map_from_directions(vectors, resolution):
     cmap[cmap < 1] = 0
     return cmap
 
-
-def get_ij_on_map(direction, resolution):
-    theta_max = math.pi
-    phi_max = math.pi / 2.0
-    rot_theta = arange(-theta_max, theta_max, resolution)
-    rot_phi = arange(-phi_max, phi_max, resolution)
-    # theta, phi = cartesian_to_spherical(direction)
-    # print(direction)
-    theta, phi = cart2sph(direction[0], direction[1], direction[2])
-    # print(direction[0], direction[1], direction[2])
-    # print(theta, phi)
-    I_f = 0
-    J_f = 0
-    l_theta = int(len(rot_theta) / 2.0)
-    l_phi = int(len(rot_phi) / 2.0)
-    for i in range(-l_theta, l_theta):
-        if i * resolution > theta:
-            I_f = i + l_theta
-            break
-    for i in range(-l_phi, l_phi):
-        if i * resolution > phi:
-            J_f = i + l_phi
-            break
-    return I_f, J_f
-
-
-def plot_mollweid(matrix, star_directions, anot=True):
+def plot_mollweid_(matrix, star_directions, anot=True):
     matrix = nan_to_num(matrix, nan=0.0)
     ra = linspace(-math.pi, math.pi, len(matrix))
     dec = linspace(-math.pi / 2, math.pi / 2, len(matrix[0]))
@@ -247,7 +122,6 @@ def plot_phi_theta_n(sat_data_spherical, sat_id=None, day=None):
 
 
 def test_one_day_sun_dirrections(star_dir, resolution, day=None):
-
     Nx, Ny, Nz, S, D, sun = get_global_stars(star_dir, day)
     print(sun)
     l = len(Nx)
@@ -279,8 +153,131 @@ def test_one_day_sun_dirrections(star_dir, resolution, day=None):
 # =================================================================================================
 
 
-star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
-resolution = radians(5.0)
-dirname_date = 'date20200102'
+# star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
+# resolution = radians(5.0)
+# dirname_date = 'date20200102'
+#
+# test_one_day_sun_dirrections(star_dir, resolution, dirname_date)
 
-test_one_day_sun_dirrections(star_dir, resolution, dirname_date)
+
+# =================================================================================================
+# =================================================================================================
+# ======================================USER TO GCS OVER ONE DAY===================================
+# =================================================================================================
+# =================================================================================================
+
+def transform_GCS_data_to_cmap(directions_GCS, resolution):
+    theta_max = math.pi
+    phi_max = math.pi / 2.0
+    rot_theta = arange(-theta_max, theta_max, resolution)
+    rot_phi = arange(-phi_max, phi_max, resolution)
+    l_theta = int(len(rot_theta) / 2.0)
+    l_phi = int(len(rot_phi) / 2.0)
+    cmap_count = zeros((len(rot_theta), len(rot_phi)))
+    for direction in directions_GCS:
+        i, j = get_ij_on_map(direction, l_theta, l_phi, resolution)
+        cmap_count[i][j] += 1
+    cmap_count[cmap_count < 1] = 0
+    return cmap_count
+
+
+def test_one_day_user_dirrections(star_dir, resolution, day_directory):
+    Nx, Ny, Nz, S, D = get_global_stars(star_dir, day_directory)
+    l = len(Nx)
+    star_directions_in_GCS = Defaults.get_star_directions_in_GCS(Nx, Ny, Nz, D, S)
+    # =================================================================================================================
+    GCS_all = [[Nx[i], Ny[i], Nz[i]] for i in range(l)]
+    # sun = array(sun)
+    # sun_GCS = []
+    user_ = pd.read_csv(os.path.join(day_directory, 'allsatellites',
+                                     Defaults.USER_POSITIONS_FILENAME.get('user')), skiprows=1).values
+
+    user_ = normvec(user_)
+    group_length = int(len(user_)/l)
+    vectors_GCS = []
+    kk = 0
+    for i in range(0, l-1):
+        for k in range(i*group_length, (i+1)*group_length):
+            # print('i: ', i, ' k: ', kk, group_length)
+            out = ecef_to_gcs(array([GCS_all[i][0], GCS_all[i][1], GCS_all[i][2]]), user_[kk])
+            vectors_GCS.append(out)
+            kk += 1
+    cmap = transform_GCS_data_to_cmap(vectors_GCS, resolution)
+    cmap = nan_to_num(cmap, nan=0.0)
+    # plt.imshow(cmap)
+    # plt.colorbar()
+    # plt.show()
+
+    # plot_mollweid(cmap, star_directions_in_GCS)
+
+    return cmap
+
+
+def find_days_and_process(user_sat_data_root, result_root, star_dir, resolution, month_names=AllGPSDataLocations.all_months):
+    d = 0
+    all_hist = []
+    if os.path.isdir(user_sat_data_root) and os.path.isdir(result_root):
+
+        months = [f.path for f in os.scandir(user_sat_data_root) if f.is_dir()]
+
+        for month in months[:]:
+            month_name = os.path.split(month)[-1]
+            # condition = month_name in month_names
+            condition = d < 1
+            if condition:
+                day_folders = [f.path for f in os.scandir(month) if f.is_dir()]
+                print("Number of days: ", month_name, len(day_folders))
+                for day_folder in day_folders[:2]:
+                    try:
+
+                        date = str(os.path.split(day_folder)[-1])[-8:]
+                        hist = test_one_day_user_dirrections(star_dir, resolution, day_folder)
+                        if hist is not None:
+                            result_month = create_dir(result_root, month_name)
+                            result_day = create_dir(result_month, date)
+                            # plot_mollweid(hist, '', result_day, "histogram", str(int(degrees(resolution))), anot=False)
+                            all_hist.append(hist)
+                            print('Date: ', date)
+                            d += 1
+                    except:
+                        print("Problem with: \n{}".format(day_folder))
+        print("Total nr of days: ", d)
+        all_hist = sum(array(all_hist), axis=0)
+        try:
+            all_hist = rotate2darray(nan_to_num(all_hist, nan=0.0))
+        except:
+            pass
+        all_hist[all_hist < 1] = 0.0
+        all_hist = nan_to_num(all_hist, nan=0)
+        print('amax: ', amax(all_hist))
+        plot_on_sphere(all_hist.T)
+        # plt.imshow(all_hist)
+        # plt.colorbar()
+        # plt.savefig(os.path.join(result_root, 'total_hist_{}.png'.format(d)))
+        # # plt.show()
+        plt.clf()
+        # plot_mollweid(all_hist, '', result_root, "histogram", str(int(degrees(resolution))), anot=False)
+
+
+
+
+star_dir = r"/Users/kelemensz/Documents/Research/GPS/STARS_GREENWICH/STARS_2020"
+nr = radians(5.0)
+
+# directory = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/januar/CUTB20200111"
+# directory = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/IIGC"
+
+# dest_dir = r"/Users/kelemensz/Documents/Research/GPS/process/show_user_inGCS/CUTB"
+# test_one_day_user_dirrections(star_dir, nr, directory, dest_dir)
+# find_days_and_process(directory, dest_dir, star_dir, nr)
+
+for ID, location in AllGPSDataLocations.user_and_satellites.items():
+    dest_dir = r"/Users/kelemensz/Documents/Research/GPS/process/show_user_inGCS"
+    # if str(ID) not in ['CUTB', 'PERTH']:
+    if str(ID) in ['IIGC']:
+        print('--------------------------         ', ID, '           --------------------------\n')
+        # try:
+        dest_dir = create_dir(dest_dir, ID)
+        find_days_and_process(location, dest_dir, star_dir, nr)
+        # except:
+        #     continue

@@ -89,7 +89,7 @@ sd = allocsillag_r[2]
 theta = radians(10)
 phi = radians(45)
 
-sd_rot = get_rotated_vectors_from_V_to_earths_system(sd, allocsillag_r[0], allocsillag_r[1], theta, phi)
+# sd_rot = get_rotated_vectors_from_V_to_earths_system(sd, allocsillag_r[0], allocsillag_r[1], theta, phi)
 
 # print(angle_between(sd, sd_rot))
 

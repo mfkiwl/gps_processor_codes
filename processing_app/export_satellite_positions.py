@@ -249,16 +249,17 @@ def process_many_from_obs_root_simple(obs_location, root_directory, needed_files
 
 
 #                    NASA
-# obs_path = r"/Volumes/KingstonSSD/GPS/NASA/obs_files"
+obs_path = r"/Volumes/KingstonSSD/GPS/NASA/obs_files"
 # destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/process_NASA"
+destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_NASA"
 
 #                   PERTH
 # obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/PERTH/rinex_obs/januar"
 # destination_path = r"/Users/kelemensz/Documents/Research/GPS/process/global_GCS_axis/PERTH_daily_measurements"
 
-#                   HKKS
-obs_path = r"/Volumes/KingstonSSD/GPS/HKG/HKKS/obs_files"
-destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS"
+# #                   HKKS
+# obs_path = r"/Volumes/KingstonSSD/GPS/HKG/HKKS/obs_files"
+# destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/process_HKKS"
 
 #                   NZLD
 # obs_path = r"/Volumes/ADATA SE800/GPS/raw_data/NZ/obs_files/ARTA_smaller_obs"
@@ -282,10 +283,10 @@ destination_path = r"/Volumes/BlueADATA S/GPS/processed_data/global_GCS_axis/pro
 # destination_path = r"/Volumes/KingstonSSD/GPS/processed_data/user_and_sat_positions_and_ionospheric_effects/PERTH_daily_measurements/CUTA"
 
 needed_files = ["user_pos_allsatellites.csv", "all_sats_pos_time.csv"]
-month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "oktober",
-               "november", "majus", "aprilis", "junius", "december2020"]
+month_names = ["julius", "szeptember", "februar", "marcius", "augusztus", "januar", "december2019", "december",
+               "oktober", "november", "majus", "aprilis", "junius", "december2020"]
 
-set1 = month_names[8:]
+set1 = month_names[:]
 for m in set1:
     obs_path_ = os.path.join(obs_path, m)
     if os.path.isdir(obs_path_):

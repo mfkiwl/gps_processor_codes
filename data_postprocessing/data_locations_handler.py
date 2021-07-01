@@ -14,6 +14,7 @@ class AllGPSDataLocations:
         'NZLD': '',
         'HKKS': '',
         'IISC': '',
+        'IIGC': '',
         'NASA': '',
         'TIDV': ''
     }
