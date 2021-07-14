@@ -374,6 +374,9 @@ def plot_on_sphere(WW):
     # ~ ax.scatter( *zip( *pointList ), color='#dd00dd' )
     ax.plot_surface(XX, YY, ZZ, cstride=1, rstride=1, facecolors=cm.jet(myheatmap))
     # plt.colorbar(cm.jet( myheatmap ))
+    ax.set_xlabel('$X$')
+    ax.set_ylabel('$Y$')
+    ax.set_zlabel('$Z$')
     plt.show()
 
 
@@ -472,8 +475,8 @@ def handle_raw_not_averaged_matrices(M, H, N, fig_directory, name, nr_days, not_
     # M = rebin(M, (int(len(M)/b), int(len(M[0])/a)))
     M = calc_correct_average(H, M, (int(len(M) / b), int(len(M[0]) / a)))
 
-    # M[M > nanmax(M) / 100] = 0
-    # M[M < -1 * abs(nanmin(M)) / 100] = 0
+    # M[M > nanmax(M) / 10] = 0
+    # M[M < -1 * abs(nanmin(M)) / 10] = 0
 
     M[M == 0.0] = nan
     # M = M * -1

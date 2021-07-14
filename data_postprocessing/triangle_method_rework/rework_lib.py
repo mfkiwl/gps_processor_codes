@@ -217,8 +217,10 @@ def get_common(vA, vB, is_id=True):
     return get_common_no_ID(vA, vB)
 
 
-def get_mean_user_position(root_path):
+def get_mean_user_position(root_path, both=False):
     user_ = pd.read_csv(os.path.join(root_path, Defaults.USER_POSITIONS_FILENAME.get('user')), skiprows=1).values
+    if both:
+        return mean(user_, axis=0).astype('float64'), user_
     return mean(user_, axis=0).astype('float64')
 
 

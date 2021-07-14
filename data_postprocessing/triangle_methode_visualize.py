@@ -138,16 +138,17 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/C
 
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/not_symmetrized"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures"
-fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/maxangle60"
-# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/vertical_cone70"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/maxangle60"
+fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/vertical_cone70"
 
 for place in AllGPSDataLocations.OBS_file_locations.keys():
-    if place != "NASA":
+    # if place != "NASA":
+    if place in ["CUTA", "CUTB"]:
         try:
-            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}/r_inv_r_twoSats".format(
-                place)
-            # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}_vertical_cone70/r_inv_r_twoSats".format(
+            # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}/r_inv_r_twoSats".format(
             #     place)
+            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}_vertical_cone70/r_inv_r_twoSats".format(
+                place)
             m, h, n, n_days = create_averaged_plots_from_root(results_root,
                                                               matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(
                                                                   7),
