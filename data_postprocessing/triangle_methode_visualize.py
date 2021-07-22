@@ -2,7 +2,7 @@ from numpy import *
 import os
 from data_postprocessing.data_locations_handler import AllGPSDataLocations
 from utility.frecvently_used_functions import find_corresponding_dirs_in_different_roots, are_reliable, is_all_data, \
-    get_csv_file, select_cmap_hist_n_mod, get_matrices_from_paths, handle_raw_not_averaged_matrices
+    get_csv_file, select_cmap_hist_n_mod, get_matrices_from_paths, handle_raw_not_averaged_matrices, create_dir
 import matplotlib.pyplot as plt
 
 
@@ -123,7 +123,7 @@ months1 = ["januar", "februar", "marcius", "november", "junius", "december2020",
 # fig_dir = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/figures_filtered_histograms"
 # results_root = r"/Volumes/BlueADATA S/GPS/processed_data/triangular_method/processed_divided_by_n/CUTA_CUTB/r_inv_r_symmetrized"
 
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/CUTA_CUTB/r_inv_r_symmetrized"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/CUTA_CUTB/r_inv_r_symmetrized"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test_old/CUTA_CUTB/r_inv_r_symmetrized"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test_old/CUTA_CUTB/r_inv_r_symmetrized"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/CUTA_CUTB/r_inv_r_symmetrized"
@@ -139,16 +139,23 @@ results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_test/C
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/not_symmetrized"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/maxangle60"
-fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/vertical_cone70"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/vertical_cone70"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/vertical_cone70_actualuser"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/figures/vertical_cone70_actualuser"
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/figures/vertical_cone70_actualuser"
+fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures"
+fig_dir = create_dir(fig_dir, r'vertical_cone180_actualuser')
 
 for place in AllGPSDataLocations.OBS_file_locations.keys():
     # if place != "NASA":
-    if place in ["CUTA", "CUTB"]:
+    if place not in ["CUTA"]:
         try:
             # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}/r_inv_r_twoSats".format(
             #     place)
-            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}_vertical_cone70/r_inv_r_twoSats".format(
+            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/{}_vertical_cone180/r_inv_r_twoSats".format(
                 place)
+            # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/{}_vertical_cone70/r_inv_r_twoSats".format(
+            #     place)
             m, h, n, n_days = create_averaged_plots_from_root(results_root,
                                                               matrix_names=DefaultsVisualize.matrixCSV_identifiers.get(
                                                                   7),

@@ -34,7 +34,7 @@ def calc_for_two_satellites(user_position, satA, satB):
     n = A_SA_i - B_SB_j
 
     mod_n = v_length(array([0, 0, 0]), n)
-    return unit(n), get_proportion_v3(AS, t1, BS, t2), mod_n
+    return unit(n), get_proportion_v3(AS, t1, BS, t2)/mod_n, mod_n
 
 
 # ===============================================================================================================================================================================
@@ -73,10 +73,14 @@ def process_all_(user_position, sat_data, symmetrized):
 
 
 def smooth_user_positions(user_positions):
+    print(shape(user_positions))
+    print(std(user_positions, axis=0))
     user_positionsT = user_positions.T
+    print(shape(user_positionsT))
     x_smooth = signal.savgol_filter(user_positionsT[0], 53, 3)
     y_smooth = signal.savgol_filter(user_positionsT[1], 53, 3)
     z_smooth = signal.savgol_filter(user_positionsT[2], 53, 3)
+
     return asarray(list(zip(x_smooth, y_smooth, z_smooth)))
 
 
@@ -84,12 +88,25 @@ def process_all(user_position, sat_data, symmetrized):
     raw_results = {}
 
     smooth_positions = smooth_user_positions(user_position)
+    # print(shape(smooth_positions))
+    # print(std(smooth_positions, axis=0))
+    pos_index = 0
+    # print(len(list(sat_data.keys())), len(user_position))
     if symmetrized:
+
         for epoch, sats_dat in tqdm(sat_data.items()):  # k = epoch index
-            raw_results[epoch] = process_one_epoch_symmetrized(smooth_positions[int(epoch)], sats_dat)
+            try:
+                raw_results[epoch] = process_one_epoch_symmetrized(smooth_positions[pos_index], sats_dat)
+                pos_index += 1
+            except:
+                pass
     else:
         for epoch, sats_dat in tqdm(sat_data.items()):  # k = epoch index
-            raw_results[epoch] = process_one_epoch(smooth_positions[int(epoch)], sats_dat)
+            try:
+                raw_results[epoch] = process_one_epoch(smooth_positions[pos_index], sats_dat)
+                pos_index += 1
+            except:
+                pass
     return raw_results
 
 
@@ -121,7 +138,7 @@ def process_raw_GCS_data(raw_results_GCS, resolution):
     return cmap_v, cmap_count, cmap_mod_n
 
 
-def process_one_day(day_root, day_result_location, star_dir, resolution, filenames, fill_out=0.0, n_filter=False, symmetrized=True):
+def process_one_day(day_root, day_result_location, star_dir, resolution, filenames, angular_distance, fill_out=0.0, n_filter=False, symmetrized=True):
     # fill_out=0.0 in case when the "r * (r-1)^2" values are in the data matrix
 
     if day_result_location is None:
@@ -139,8 +156,7 @@ def process_one_day(day_root, day_result_location, star_dir, resolution, filenam
     sat_data = get_user_and_sat_positions(day_root, get_u=False)
     mean_position, user_positions = get_mean_user_position(day_root, both=True)
 
-    sat_data = filter_sats_within_solid_angle_above_the_sky(sat_data, mean_position, angular_distance=70.0)
-
+    sat_data = filter_sats_within_solid_angle_above_the_sky(sat_data, mean_position, angular_distance=angular_distance)
 
     raw_results_ECEF_AB = get_raw_results_of_day(sat_data, user_positions, symmetrized=symmetrized)
     groupped_raw_results_ECEF_AB = consecutively_group_results(raw_results_ECEF_AB, nr_of_galactic_frames)
@@ -177,7 +193,7 @@ def process_one_day(day_root, day_result_location, star_dir, resolution, filenam
     # return 0,0,0
 
 
-def find_days_and_process(user_sat_data_root, result_root, star_dir, resolution, month_names=AllGPSDataLocations.all_months, symmetrized=True):
+def find_days_and_process(user_sat_data_root, result_root, star_dir, resolution, month_names=AllGPSDataLocations.all_months, symmetrized=True, coneangle=180):
     filenames = Defaults.triangle_result_names_n_filter_notsym if not symmetrized else Defaults.triangle_result_names_n_filter_sym
     print(filenames)
     d = 0
@@ -190,6 +206,7 @@ def find_days_and_process(user_sat_data_root, result_root, star_dir, resolution,
         for month in months[:]:
             month_name = os.path.split(month)[-1]
             condition = month_name in month_names
+            # condition = month_name != "aprilis"
             # condition = d < 1
             # condition = month_name in ['aprilis']
             if condition:
@@ -197,22 +214,23 @@ def find_days_and_process(user_sat_data_root, result_root, star_dir, resolution,
                 day_folders = [f.path for f in os.scandir(month) if f.is_dir()]  # and len(str(f)) == 12 and str(f)[-8:].isnumeric()]
                 print("Number of days: ", len(day_folders))
                 for day_folder in day_folders[:]:
-                    try:
-                        start = time.time()
-                        date = str(os.path.split(day_folder)[-1])[-8:]
-                        fileset_day = input_fileset_of_the_day(day_folder, True)
+                    # try:
+                    start = time.time()
+                    date = str(os.path.split(day_folder)[-1])[-8:]
+                    fileset_day = input_fileset_of_the_day(day_folder, True)
 
-                        if fileset_day != 0 and not too_bad_positions_std(day_folder, Defaults.USER_POSITIONS_FILENAME.get('user')):
-                            result_month = create_dir(result_root, month_name)
-                            result_day = create_dir(result_month, date)
-                            dayfiles = [f for f in os.listdir(result_day) if os.path.isfile(os.path.join(result_day, f))]
-                            # if len(os.listdir(result_day)) == 0:
+                    if fileset_day != 0 and not too_bad_positions_std(day_folder, Defaults.USER_POSITIONS_FILENAME.get('user')):
+                        result_month = create_dir(result_root, month_name)
+                        result_day = create_dir(result_month, date)
+                        dayfiles = [f for f in os.listdir(result_day) if os.path.isfile(os.path.join(result_day, f))]
+                        # if len(os.listdir(result_day)) == 0:
+                        try:
                             if not is_string_in_filenames(filenames[0], dayfiles):
                                 print(" Data will be processed from: ", os.path.split(day_folder)[-1], "    ",
                                       "\n", "Index of the process: ", d, "\n")
                                 day_folder = os.path.join(day_folder, "allsatellites")
 
-                                value, hist, n_mod = process_one_day(day_folder, result_day, star_dir, resolution, filenames, n_filter=1.0, symmetrized=symmetrized)
+                                value, hist, n_mod = process_one_day(day_folder, result_day, star_dir, resolution, filenames, n_filter=1.0, symmetrized=symmetrized, angular_distance=coneangle)
                                 all_hist.append(hist)
                                 all_value.append(value)
                                 all_n_mod.append(n_mod)
@@ -220,8 +238,10 @@ def find_days_and_process(user_sat_data_root, result_root, star_dir, resolution,
                                 print('Elapsed time of the current day: ', time.time() - start, date)
                             else:
                                 print("{} already processed!".format(date))
-                    except:
-                        pass
+                        except:
+                            pass
+                    # except:
+                    #     pass
                     else:
                         print("\n Data not found for: ", date, "\n")
 
@@ -255,13 +275,15 @@ needed_files = [Defaults.USER_POSITIONS_FILENAME, Defaults.SAT_POS_FILENAMES.get
                 Defaults.SAT_POS_FILENAMES.get('ID')]
 
 
-user_sat_data_root = AllGPSDataLocations.user_and_satellites.get('CUTB')
+user_sat_data_root = AllGPSDataLocations.user_and_satellites.get('IIGC')
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/CUTB_vertical_cone70"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/CUTB_vertical_cone70"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/CUTB_vertical_cone70"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/HKKS_vertical_cone100"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/IIGC_vertical_cone100"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/NZLD_vertical_cone70"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/HKKS"
+
 results_root = create_dir(results_root, r'r_inv_r_twoSats')
 
-
-
-find_days_and_process(user_sat_data_root, result_root=results_root, star_dir=star_dir, resolution=resolution, symmetrized=False)
+find_days_and_process(user_sat_data_root, result_root=results_root, star_dir=star_dir, resolution=resolution, symmetrized=True, coneangle=100)
