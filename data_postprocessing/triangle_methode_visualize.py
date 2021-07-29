@@ -143,16 +143,17 @@ months1 = ["januar", "februar", "marcius", "november", "junius", "december2020",
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures/vertical_cone70_actualuser"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/figures/vertical_cone70_actualuser"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/figures/vertical_cone70_actualuser"
-fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/figures"
-fig_dir = create_dir(fig_dir, r'vertical_cone180_actualuser')
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/figures/NZLD_differentconesizes"
+fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/figures/NZLD_differentconesizes"
+fig_dir = create_dir(fig_dir, r'vertical_cone85_actualuser')
 
 for place in AllGPSDataLocations.OBS_file_locations.keys():
     # if place != "NASA":
-    if place not in ["CUTA"]:
+    if place in ["NZLD"]:
         try:
             # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}/r_inv_r_twoSats".format(
             #     place)
-            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/{}_vertical_cone180/r_inv_r_twoSats".format(
+            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/{}_vertical_cone85/r_inv_r_twoSats".format(
                 place)
             # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/{}_vertical_cone70/r_inv_r_twoSats".format(
             #     place)

@@ -230,7 +230,7 @@ def find_days_and_process(user_sat_data_root, result_root, star_dir, resolution,
                                       "\n", "Index of the process: ", d, "\n")
                                 day_folder = os.path.join(day_folder, "allsatellites")
 
-                                value, hist, n_mod = process_one_day(day_folder, result_day, star_dir, resolution, filenames, n_filter=1.0, symmetrized=symmetrized, angular_distance=coneangle)
+                                value, hist, n_mod = process_one_day(day_folder, result_day, star_dir, resolution, filenames, n_filter=False, symmetrized=symmetrized, angular_distance=coneangle)
                                 all_hist.append(hist)
                                 all_value.append(value)
                                 all_n_mod.append(n_mod)
@@ -275,15 +275,15 @@ needed_files = [Defaults.USER_POSITIONS_FILENAME, Defaults.SAT_POS_FILENAMES.get
                 Defaults.SAT_POS_FILENAMES.get('ID')]
 
 
-user_sat_data_root = AllGPSDataLocations.user_and_satellites.get('IIGC')
+user_sat_data_root = AllGPSDataLocations.user_and_satellites.get('HKKS')
 
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/CUTB_vertical_cone70"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/CUTB_vertical_cone70"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/HKKS_vertical_cone100"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/IIGC_vertical_cone100"
+results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/HKKS_vertical_cone180"
+# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/NZLD_vertical_cone85"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/NZLD_vertical_cone70"
 # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/HKKS"
 
 results_root = create_dir(results_root, r'r_inv_r_twoSats')
 
-find_days_and_process(user_sat_data_root, result_root=results_root, star_dir=star_dir, resolution=resolution, symmetrized=True, coneangle=100)
+find_days_and_process(user_sat_data_root, result_root=results_root, star_dir=star_dir, resolution=resolution, symmetrized=True, coneangle=180)
