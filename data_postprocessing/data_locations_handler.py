@@ -13,9 +13,9 @@ class AllGPSDataLocations:
         'CUTA': '',
         'NZLD': '',
         'HKKS': '',
-        'IISC': '',
         'IIGC': '',
         'NASA': '',
+        'IISC': '',
         'TIDV': ''
     }
 

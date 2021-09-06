@@ -274,16 +274,20 @@ resolution = radians(5.0)
 needed_files = [Defaults.USER_POSITIONS_FILENAME, Defaults.SAT_POS_FILENAMES.get('no_ID'),
                 Defaults.SAT_POS_FILENAMES.get('ID')]
 
+coneangle = 180
+for reciever in list(AllGPSDataLocations.OBS_file_locations.keys())[2:-2]:
+    try:
+        user_sat_data_root = AllGPSDataLocations.user_and_satellites.get(reciever)
 
-user_sat_data_root = AllGPSDataLocations.user_and_satellites.get('HKKS')
+        # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/CUTB_vertical_cone70"
+        # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/CUTB_vertical_cone70"
+        results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/{}_vertical_cone{}".format(str(reciever), str(coneangle))
+        # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/NZLD_vertical_cone85"
+        # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/NZLD_vertical_cone70"
+        # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/HKKS"
 
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/CUTB_vertical_cone70"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/CUTB_vertical_cone70"
-results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/HKKS_vertical_cone180"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/NZLD_vertical_cone85"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/NZLD_vertical_cone70"
-# results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/HKKS"
+        results_root = create_dir(results_root, r'r_inv_r_twoSats')
 
-results_root = create_dir(results_root, r'r_inv_r_twoSats')
-
-find_days_and_process(user_sat_data_root, result_root=results_root, star_dir=star_dir, resolution=resolution, symmetrized=True, coneangle=180)
+        find_days_and_process(user_sat_data_root, result_root=results_root, star_dir=star_dir, resolution=resolution, symmetrized=True, coneangle=coneangle)
+    except:
+        continue

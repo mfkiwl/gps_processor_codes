@@ -144,17 +144,26 @@ months1 = ["januar", "februar", "marcius", "november", "junius", "december2020",
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/figures/vertical_cone70_actualuser"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/figures/vertical_cone70_actualuser"
 # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/figures/NZLD_differentconesizes"
-fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/figures/NZLD_differentconesizes"
-fig_dir = create_dir(fig_dir, r'vertical_cone85_actualuser')
-
+# fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/figures/NZLD_differentconesizes"
+# fig_dir = create_dir(fig_dir, r'vertical_cone85_actualuser')
+coneangle = 70
 for place in AllGPSDataLocations.OBS_file_locations.keys():
     # if place != "NASA":
-    if place in ["NZLD"]:
+    # if place in ["NZLD"]:
+    if place not in ["NZLD"]:
         try:
+            # fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/figures/{}_differentconesizes".format(place)
+            # fig_dir = create_dir(fig_dir, r'vertical_cone{}_actualuser'.format(coneangle))
+            fig_dir = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/figures2/{}_differentconesizes".format(place)
+            fig_dir = create_dir(fig_dir, r'vertical_cone{}_actualuser'.format(coneangle))
             # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats/{}/r_inv_r_twoSats".format(
             #     place)
-            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/{}_vertical_cone85/r_inv_r_twoSats".format(
-                place)
+            # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart_no_nmod_filter/{}_vertical_cone{}/r_inv_r_twoSats".format(
+            #     place, coneangle)
+            # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_smart/{}_vertical_cone{}/r_inv_r_twoSats".format(
+            #     place, coneangle)
+            results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_variableuserpos/{}_vertical_cone{}/r_inv_r_twoSats".format(
+                place, coneangle)
             # results_root = r"/Users/kelemensz/Documents/Research/GPS/process/triangle_method_two_sats_dividedbynmod/{}_vertical_cone70/r_inv_r_twoSats".format(
             #     place)
             m, h, n, n_days = create_averaged_plots_from_root(results_root,
@@ -170,7 +179,8 @@ for place in AllGPSDataLocations.OBS_file_locations.keys():
             handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair + "_int", nr_days=n_days,
                                              round=True)
             handle_raw_not_averaged_matrices(m, h, n, fig_directory=fig_dir, name=pair, nr_days=n_days, round=False)
-        except:
+        except Exception as err:
+            print("OS error: {0}".format(err))
             print('')
 
 
